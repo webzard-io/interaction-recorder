@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "sourceMap": true,
+    "module": "ESNext",
+    "outDir": "build",
+    "strict": true,
+    "lib": ["DOM", "DOM.Iterable", "esnext"],
+    "esModuleInterop": true,
+    "typeRoots": ["types"],
+    "types": ["node"],
+    "rootDir": "src",
+    "declaration": true,
+    "moduleResolution": "Node",
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "skipLibCheck": true
+  },
+  "include": ["src"],
+  "exclude": ["./build/**/*", "./typings/**/*"]
+}

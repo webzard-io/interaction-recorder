@@ -1,0 +1,41 @@
+{
+  "name": "interaction-recorder",
+  "version": "0.0.1",
+  "description": "record user interactions in the browser",
+  "main": "build/index.js",
+  "scripts": {
+    "prepare": "husky install",
+    "start": "rimraf build &&  rollup -c -w",
+    "start:dev": "rimraf build && cross-env DEVELOPMENT=true rollup -c -w",
+    "build": "rimraf build && rollup -c",
+    "build:dev": "rimraf build && cross-env DEVELOPMENT=true rollup -c",
+    "typings": "tsc -d --emitDeclarationOnly --declarationDir typings",
+    "prepublish": "npm run build && npm run typings",
+    "lint": "prettier --write src/* && tslint src/**/*.ts",
+    "test": "echo \"no tests\" "
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/webzard-io/interaction-recorder.git"
+  },
+  "author": "webzard.io",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/webzard-io/interaction-recorder/issues"
+  },
+  "homepage": "https://github.com/webzard-io/interaction-recorder#readme",
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^19.0.0",
+    "cross-env": "^7.0.3",
+    "husky": "^6.0.0",
+    "prettier": "^2.3.1",
+    "rimraf": "^3.0.2",
+    "rollup": "^2.51.2",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-peer-deps-external": "^2.2.4",
+    "rollup-plugin-terser": "^7.0.2",
+    "rollup-plugin-typescript2": "^0.30.0",
+    "tslint": "^6.1.3",
+    "typescript": "^4.3.2"
+  }
+}
