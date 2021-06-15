@@ -11,7 +11,7 @@
     "build:dev": "rimraf build && cross-env DEVELOPMENT=true rollup -c",
     "typings": "tsc -d --emitDeclarationOnly --declarationDir typings",
     "prepublish": "npm run build && npm run typings",
-    "lint": "prettier --write src/* && tslint src/**/*.ts",
+    "lint": "prettier --write src/* && eslint src --ext .ts",
     "test": "echo \"no tests\" "
   },
   "repository": {
@@ -26,7 +26,10 @@
   "homepage": "https://github.com/webzard-io/interaction-recorder#readme",
   "devDependencies": {
     "@rollup/plugin-commonjs": "^19.0.0",
+    "@typescript-eslint/eslint-plugin": "^4.27.0",
+    "@typescript-eslint/parser": "^4.27.0",
     "cross-env": "^7.0.3",
+    "eslint": "^7.28.0",
     "husky": "^6.0.0",
     "prettier": "^2.3.1",
     "rimraf": "^3.0.2",
@@ -35,7 +38,6 @@
     "rollup-plugin-peer-deps-external": "^2.2.4",
     "rollup-plugin-terser": "^7.0.2",
     "rollup-plugin-typescript2": "^0.30.0",
-    "tslint": "^6.1.3",
     "typescript": "^4.3.2"
   }
 }

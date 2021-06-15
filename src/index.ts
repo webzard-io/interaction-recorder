@@ -1,3 +1,3 @@
-function init() {
+export function init() {
   return 'init...';
 }
