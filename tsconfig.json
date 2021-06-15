@@ -8,7 +8,7 @@
     "lib": ["DOM", "DOM.Iterable", "esnext"],
     "esModuleInterop": true,
     "typeRoots": ["types"],
-    "types": ["node"],
+    "types": ["node", "jest"],
     "rootDir": "src",
     "declaration": true,
     "moduleResolution": "Node",
