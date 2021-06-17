@@ -71,12 +71,16 @@ export type ScrollEvent = BaseEvent & {
 export type KeydownEvent = BaseEvent & {
   type: 'KEYDOWN';
   key: string;
+  code: string;
+  keyCode: number;
   modifiers: Modifiers;
 };
 
 export type KeypressEvent = BaseEvent & {
   type: 'KEYPRESS';
   key: string;
+  code: string;
+  keyCode: number;
   modifiers: Modifiers;
 };
 
@@ -89,6 +93,7 @@ export type TextInputEvent = BaseEvent & {
 export type KeyupEvent = BaseEvent & {
   type: 'KEYUP';
   key: string;
+  code: string;
   keyCode: number;
   modifiers: Modifiers;
 };

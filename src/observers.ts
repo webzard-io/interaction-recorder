@@ -192,11 +192,12 @@ export class EventObserver {
   private observeKeyboardInteractions() {
     const getHandler = (type: 'KEYDOWN' | 'KEYPRESS' | 'KEYUP') => {
       return (evt: Event) => {
-        const { key, keyCode } = evt as KeyboardEvent;
+        const { key, code, keyCode } = evt as KeyboardEvent;
         this.onEmit(
           {
             type,
             key,
+            code,
             keyCode,
             modifiers: toModifiers(evt as KeyboardEvent),
             timestamp: this.now(),
