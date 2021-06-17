@@ -112,7 +112,10 @@ export function shouldStartNewOne(
   /**
    * a BLUR follows TEXT INPUT should be a new step
    */
-  if (newEvent.type === 'BLUR' && events.some((e) => e.type === 'TEXT_INPUT')) {
+  if (
+    newEvent.type === 'BLUR' &&
+    events.some((e) => e.type === 'TEXT_INPUT' || e.type === 'TEXT_CHANGE')
+  ) {
     return true;
   }
   return false;

@@ -65,6 +65,26 @@ function toModifiers(options: {
   };
 }
 
+function isFileInput(el: HTMLElement): el is HTMLInputElement {
+  return el.tagName === 'INPUT' && (el as HTMLInputElement).type === 'file';
+}
+
+function isTextElement(
+  el: HTMLElement,
+): el is HTMLInputElement | HTMLTextAreaElement {
+  return ['INPUT', 'TEXTAREA'].includes(el.tagName);
+}
+
+function isTextInputElement(
+  el: HTMLElement,
+): el is HTMLInputElement | HTMLTextAreaElement {
+  return isTextElement(el) && !isFileInput(el);
+}
+
+function isContentEditable(el: HTMLElement) {
+  return el.contentEditable === 'true';
+}
+
 export class EventObserver {
   private win: Window;
   private doc: Document;
@@ -237,14 +257,48 @@ export class EventObserver {
           {
             type: 'TEXT_INPUT',
             data,
-            value: (evt.target as HTMLInputElement).value,
+            /**
+             * text input event will not record input value any more
+             * because you can find it in text change events
+             */
+            value: '',
             timestamp: this.now(),
           },
           evt.target as HTMLElement,
         );
       }
     };
+    const changeHandler = (evt: Event) => {
+      const target = evt.target as HTMLElement | null;
+      if (!target) {
+        return;
+      }
+      if (['checkbox', 'radio'].includes((target as HTMLInputElement).type)) {
+        return;
+      }
+      if (isTextInputElement(target)) {
+        return this.onEmit(
+          {
+            type: 'TEXT_CHANGE',
+            value: target.value,
+            timestamp: this.now(),
+          },
+          target,
+        );
+      }
+      if (isContentEditable(target)) {
+        return this.onEmit(
+          {
+            type: 'TEXT_CHANGE',
+            value: target.innerHTML,
+            timestamp: this.now(),
+          },
+          target,
+        );
+      }
+    };
     this.handlers.push(on('input', handler, this.doc));
+    this.handlers.push(on('input', changeHandler, this.doc));
   }
 
   private observeBlur() {

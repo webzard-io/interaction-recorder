@@ -15,6 +15,7 @@ export type StepEvent =
   | KeydownEvent
   | KeypressEvent
   | TextInputEvent
+  | TextChangeEvent
   | KeyupEvent
   | BlurEvent
   | BeforeUnloadEvent;
@@ -88,6 +89,12 @@ export type KeypressEvent = BaseEvent & {
 export type TextInputEvent = BaseEvent & {
   type: 'TEXT_INPUT';
   data: string;
+  // departed
+  value: string;
+};
+
+export type TextChangeEvent = BaseEvent & {
+  type: 'TEXT_CHANGE';
   value: string;
 };
 
