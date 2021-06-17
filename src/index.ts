@@ -55,8 +55,6 @@ export class Recorder {
     const isTargetChanged = this.currentTarget !== target;
     if (shouldStartNewOne(this.currentEvents, stepEvent, isTargetChanged)) {
       this.emitCurrentStep();
-      this.collectEvent(stepEvent, target);
-      return;
     }
 
     /**

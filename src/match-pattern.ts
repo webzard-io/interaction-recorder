@@ -55,7 +55,7 @@ export function matchPattern(events: StepEvent[]): {
    * SCROLL
    * [SCROLL]
    */
-  if (events[0].type === 'SCROLL') {
+  if (events.every((e) => e.type === 'SCROLL')) {
     return {
       action: 'SCROLL',
     };
