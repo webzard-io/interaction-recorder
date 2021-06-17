@@ -97,6 +97,12 @@ export function shouldStartNewOne(
     return true;
   }
   /**
+   * need to send step before unload
+   */
+  if (newEvent.type === 'BEFORE_UNLOAD') {
+    return true;
+  }
+  /**
    * a KEYDOWN follows non-keyboard event should be a new step
    */
   if (newEvent.type === 'KEYDOWN' && !keyboardSet.has(lastEvent.type)) {
@@ -146,8 +152,5 @@ export function shouldStopCurrentOne(events: StepEvent[]): boolean {
 }
 
 export function needCollect(event: StepEvent): boolean {
-  if (event.type === 'BLUR') {
-    return false;
-  }
-  return true;
+  return !['BLUR', 'BEFORE_UNLOAD'].includes(event.type);
 }

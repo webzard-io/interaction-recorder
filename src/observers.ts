@@ -87,6 +87,7 @@ export class EventObserver {
       this.observeKeyboardInteractions();
       this.observeTextInput();
       this.observeBlur();
+      this.observeBeforeUnload();
       this.state = 'active';
     }
   }
@@ -239,6 +240,19 @@ export class EventObserver {
         null,
       );
     this.handlers.push(on('blur', handler, this.doc));
+  }
+
+  private observeBeforeUnload() {
+    const handler = () => {
+      this.onEmit(
+        {
+          type: 'BEFORE_UNLOAD',
+          timestamp: this.now(),
+        },
+        null,
+      );
+    };
+    this.handlers.push(on('beforeunload', handler, this.win));
   }
 
   private now() {

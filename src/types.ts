@@ -16,7 +16,8 @@ export type StepEvent =
   | KeypressEvent
   | TextInputEvent
   | KeyupEvent
-  | BlurEvent;
+  | BlurEvent
+  | BeforeUnloadEvent;
 
 export type Modifiers = {
   // only record modifers when needed
@@ -100,4 +101,8 @@ export type KeyupEvent = BaseEvent & {
 
 export type BlurEvent = BaseEvent & {
   type: 'BLUR';
+};
+
+export type BeforeUnloadEvent = BaseEvent & {
+  type: 'BEFORE_UNLOAD';
 };
