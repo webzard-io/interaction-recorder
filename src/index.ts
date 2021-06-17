@@ -50,10 +50,10 @@ export class Recorder {
   private eventHandler(stepEvent: StepEvent, target: HTMLElement | null) {
     /**
      * When a new step event should start a new step,
-     * we alos stop the current one.
+     * we also stop the current one.
      */
-
-    if (shouldStartNewOne(this.currentEvents, stepEvent)) {
+    const isTargetChanged = this.currentTarget !== target;
+    if (shouldStartNewOne(this.currentEvents, stepEvent, isTargetChanged)) {
       this.emitCurrentStep();
       this.collectEvent(stepEvent, target);
       return;

@@ -163,6 +163,9 @@ export class EventObserver {
 
   private observeScroll() {
     const updatePosition = throttle<UIEvent>((evt) => {
+      if ((evt.target as HTMLElement).tagName === 'INPUT') {
+        return;
+      }
       if (evt.target === this.doc) {
         const scrollEl = this.doc.scrollingElement || this.doc.documentElement;
         this.onEmit(

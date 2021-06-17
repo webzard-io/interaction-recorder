@@ -79,6 +79,7 @@ export function matchPattern(events: StepEvent[]): {
 export function shouldStartNewOne(
   events: StepEvent[],
   newEvent: StepEvent,
+  isTargetChanged: boolean,
 ): boolean {
   if (!events.length) {
     return false;
@@ -93,7 +94,7 @@ export function shouldStartNewOne(
   /**
    * SCROLL should be a new step
    */
-  if (newEvent.type === 'SCROLL') {
+  if (newEvent.type === 'SCROLL' && isTargetChanged) {
     return true;
   }
   /**
