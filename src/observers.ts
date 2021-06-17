@@ -103,6 +103,20 @@ export class EventObserver {
   private observeMouseInteractions() {
     const getHandler = (type: 'MOUSEDOWN' | 'MOUSEUP' | 'CLICK') => {
       return (evt: Event) => {
+        /**
+         * According to the HTML standard, the <input /> element
+         * inside a <label /> element will use the label as its
+         * control element.
+         * So clicking the label will trigger a click event to
+         * the input element either.
+         * The triggered click event has 'isTrusted' flag being
+         * set to 'true'. But we can check 'event.detail' which
+         * indicates the number of click. A click event with the
+         * detail of 0 must be triggered by the system.
+         */
+        if (type === 'CLICK' && (evt as UIEvent).detail < 1) {
+          return;
+        }
         const { clientX, clientY } = evt as MouseEvent;
         this.onEmit(
           {
