@@ -43,6 +43,10 @@ export class Recorder {
     this.eventObserver.start();
   }
 
+  public stop(): void {
+    this.eventObserver.stop();
+  }
+
   private eventHandler(stepEvent: StepEvent, target: HTMLElement | null) {
     /**
      * When a new step event should start a new step,

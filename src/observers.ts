@@ -71,6 +71,8 @@ export class EventObserver {
   private onEmit: EmitHandler;
   private handlers: ResetHandler[] = [];
 
+  private state: 'active' | 'inactive' = 'inactive';
+
   constructor(win: Window, doc: Document, onEmit: EmitHandler) {
     this.win = win;
     this.doc = doc;
@@ -78,16 +80,23 @@ export class EventObserver {
   }
 
   public start(): void {
-    this.observeMouseInteractions();
-    this.observeMousemove();
-    this.observeScroll();
-    this.observeKeyboardInteractions();
-    this.observeTextInput();
-    this.observeBlur();
+    if (this.state === 'inactive') {
+      this.observeMouseInteractions();
+      this.observeMousemove();
+      this.observeScroll();
+      this.observeKeyboardInteractions();
+      this.observeTextInput();
+      this.observeBlur();
+      this.state = 'active';
+    }
   }
 
   public stop(): void {
-    this.handlers.forEach((h) => h());
+    if (this.state === 'active') {
+      this.handlers.forEach((h) => h());
+      this.handlers.length = 0;
+      this.state = 'inactive';
+    }
   }
 
   private observeMouseInteractions() {
