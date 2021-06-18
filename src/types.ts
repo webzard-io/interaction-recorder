@@ -15,8 +15,12 @@ export type StepEvent =
   | KeydownEvent
   | KeypressEvent
   | TextInputEvent
+  | TextChangeEvent
   | KeyupEvent
-  | BlurEvent;
+  | BlurEvent
+  | BeforeUnloadEvent
+  | HoverEvent
+  | WheelEvent;
 
 export type Modifiers = {
   // only record modifers when needed
@@ -71,28 +75,54 @@ export type ScrollEvent = BaseEvent & {
 export type KeydownEvent = BaseEvent & {
   type: 'KEYDOWN';
   key: string;
+  code: string;
+  keyCode: number;
   modifiers: Modifiers;
 };
 
 export type KeypressEvent = BaseEvent & {
   type: 'KEYPRESS';
   key: string;
+  code: string;
+  keyCode: number;
   modifiers: Modifiers;
 };
 
 export type TextInputEvent = BaseEvent & {
   type: 'TEXT_INPUT';
   data: string;
+  // departed
+  value: string;
+};
+
+export type TextChangeEvent = BaseEvent & {
+  type: 'TEXT_CHANGE';
   value: string;
 };
 
 export type KeyupEvent = BaseEvent & {
   type: 'KEYUP';
   key: string;
+  code: string;
   keyCode: number;
   modifiers: Modifiers;
 };
 
 export type BlurEvent = BaseEvent & {
   type: 'BLUR';
+};
+
+export type BeforeUnloadEvent = BaseEvent & {
+  type: 'BEFORE_UNLOAD';
+};
+
+export type HoverEvent = BaseEvent & {
+  type: 'HOVER';
+  clientX: number;
+  clientY: number;
+  modifiers: Modifiers;
+};
+
+export type WheelEvent = BaseEvent & {
+  type: 'WHEEL';
 };

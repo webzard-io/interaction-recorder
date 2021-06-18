@@ -53,9 +53,16 @@ export function matchPattern(events: StepEvent[]): {
 
   /**
    * SCROLL
-   * [SCROLL]
+   * [WHELL] [SCROLL * n]
+   * [MOUSEDOWN] [SCROLL * n] [MOUSEUP]
    */
-  if (events[0].type === 'SCROLL') {
+  if (
+    (events[0].type === 'WHEEL' &&
+      events.slice(1, len).every((e) => e.type === 'SCROLL')) ||
+    (events[0].type === 'MOUSEDOWN' &&
+      events[len - 1].type === 'MOUSEUP' &&
+      events.slice(1, len - 1).every((e) => e.type === 'SCROLL'))
+  ) {
     return {
       action: 'SCROLL',
     };
@@ -79,6 +86,7 @@ export function matchPattern(events: StepEvent[]): {
 export function shouldStartNewOne(
   events: StepEvent[],
   newEvent: StepEvent,
+  isTargetChanged: boolean,
 ): boolean {
   if (!events.length) {
     return false;
@@ -93,7 +101,13 @@ export function shouldStartNewOne(
   /**
    * SCROLL should be a new step
    */
-  if (newEvent.type === 'SCROLL') {
+  if (newEvent.type === 'WHEEL' && isTargetChanged) {
+    return true;
+  }
+  /**
+   * need to send step before unload
+   */
+  if (newEvent.type === 'BEFORE_UNLOAD') {
     return true;
   }
   /**
@@ -105,7 +119,10 @@ export function shouldStartNewOne(
   /**
    * a BLUR follows TEXT INPUT should be a new step
    */
-  if (newEvent.type === 'BLUR' && events.some((e) => e.type === 'TEXT_INPUT')) {
+  if (
+    newEvent.type === 'BLUR' &&
+    events.some((e) => e.type === 'TEXT_INPUT' || e.type === 'TEXT_CHANGE')
+  ) {
     return true;
   }
   return false;
@@ -129,6 +146,8 @@ export function shouldStopCurrentOne(events: StepEvent[]): boolean {
   if (!events.length) {
     return false;
   }
+
+  const firstEvent = events[0];
   const lastEvent = events[events.length - 1];
   /**
    * CLICK is the last event of a click action
@@ -137,17 +156,18 @@ export function shouldStopCurrentOne(events: StepEvent[]): boolean {
     return true;
   }
   /**
-   * SCROLL indicates STEP is complete
+   * SCROLL event by middle mouse button click
    */
-  if (lastEvent.type === 'SCROLL') {
+  if (
+    lastEvent.type === 'MOUSEUP' &&
+    firstEvent.type === 'MOUSEDOWN' &&
+    events[events.length - 2].type === 'SCROLL'
+  ) {
     return true;
   }
   return false;
 }
 
 export function needCollect(event: StepEvent): boolean {
-  if (event.type === 'BLUR') {
-    return false;
-  }
-  return true;
+  return !['BLUR', 'BEFORE_UNLOAD'].includes(event.type);
 }
