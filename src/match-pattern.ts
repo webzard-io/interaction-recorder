@@ -53,9 +53,16 @@ export function matchPattern(events: StepEvent[]): {
 
   /**
    * SCROLL
-   * [SCROLL]
+   * [WHELL] [SCROLL * n]
+   * [MOUSEDOWN] [SCROLL * n] [MOUSEUP]
    */
-  if (events.every((e) => e.type === 'SCROLL')) {
+  if (
+    (events[0].type === 'WHEEL' &&
+      events.slice(1, len).every((e) => e.type === 'SCROLL')) ||
+    (events[0].type === 'MOUSEDOWN' &&
+      events[len - 1].type === 'MOUSEUP' &&
+      events.slice(1, len - 1).every((e) => e.type === 'SCROLL'))
+  ) {
     return {
       action: 'SCROLL',
     };
@@ -94,7 +101,7 @@ export function shouldStartNewOne(
   /**
    * SCROLL should be a new step
    */
-  if (newEvent.type === 'SCROLL' && isTargetChanged) {
+  if (newEvent.type === 'WHEEL' && isTargetChanged) {
     return true;
   }
   /**
@@ -139,6 +146,8 @@ export function shouldStopCurrentOne(events: StepEvent[]): boolean {
   if (!events.length) {
     return false;
   }
+
+  const firstEvent = events[0];
   const lastEvent = events[events.length - 1];
   /**
    * CLICK is the last event of a click action
@@ -147,9 +156,13 @@ export function shouldStopCurrentOne(events: StepEvent[]): boolean {
     return true;
   }
   /**
-   * SCROLL indicates STEP is complete
+   * SCROLL event by middle mouse button click
    */
-  if (lastEvent.type === 'SCROLL') {
+  if (
+    lastEvent.type === 'MOUSEUP' &&
+    firstEvent.type === 'MOUSEDOWN' &&
+    events[events.length - 2].type === 'SCROLL'
+  ) {
     return true;
   }
   return false;

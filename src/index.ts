@@ -48,11 +48,31 @@ export class Recorder {
   }
 
   private eventHandler(stepEvent: StepEvent, target: HTMLElement | null) {
+    const isTargetChanged = this.currentTarget !== target;
+    /**
+     * according to current implementation a scroll step won't be the first step for any type of event;
+     * a scroll event must be started by a wheel or mouseup event share the same target;
+     */
+    if (stepEvent.type === 'SCROLL' && this.currentTarget !== target) {
+      /**
+       * ignore other scroll steps on other element when there is already a scroll event;
+       */
+      return;
+    } else if (
+      stepEvent.type === 'WHEEL' &&
+      target === this.currentTarget &&
+      this.currentEvents.length &&
+      this.currentEvents[0].type === 'WHEEL'
+    ) {
+      /**
+       * ignore extra wheel event share the same target;
+       */
+      return;
+    }
     /**
      * When a new step event should start a new step,
      * we also stop the current one.
      */
-    const isTargetChanged = this.currentTarget !== target;
     if (shouldStartNewOne(this.currentEvents, stepEvent, isTargetChanged)) {
       this.emitCurrentStep();
     }
@@ -85,14 +105,24 @@ export class Recorder {
       throw new Error('current target is missing');
     }
     const { action } = matchPattern(this.currentEvents);
-    if (action !== 'UNKNOWN') {
-      this.onEmit({
-        selector: this.metaQuerier.getMeta(this.currentTarget),
-        action,
-        events: this.currentEvents,
-      });
-    } else {
-      console.error(`Unknown events: ${JSON.stringify(this.currentEvents)}`);
+    switch (action) {
+      case 'UNKNOWN':
+        console.error(`Unknown events: ${JSON.stringify(this.currentEvents)}`);
+        break;
+      case 'SCROLL':
+        this.onEmit({
+          selector: this.metaQuerier.getMeta(this.currentTarget),
+          action,
+          events: this.currentEvents,
+        });
+        break;
+      default:
+        this.onEmit({
+          selector: this.metaQuerier.getMeta(this.currentTarget),
+          action,
+          events: this.currentEvents.filter((event) => event.type === 'SCROLL'),
+        });
+        break;
     }
     this.currentTarget = null;
     this.currentEvents = [];

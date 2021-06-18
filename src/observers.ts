@@ -1,4 +1,5 @@
 import { Modifiers, StepEvent, MousemoveRecord } from './types';
+import { ThrottleManager } from './util/throttler';
 
 type ResetHandler = () => void;
 type EmitHandler = (event: StepEvent, target: HTMLElement | null) => void;
@@ -11,44 +12,6 @@ function on(
   const options = { capture: true, passive: true };
   target.addEventListener(type, fn, options);
   return () => target.removeEventListener(type, fn, options);
-}
-
-type throttleOptions = {
-  leading?: boolean;
-  trailing?: boolean;
-};
-function throttle<T>(
-  func: (arg: T) => void,
-  wait: number,
-  options: throttleOptions = {},
-) {
-  let timeout: number | null = null;
-  let previous = 0;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return function (this: any) {
-    const now = Date.now();
-    if (!previous && options.leading === false) {
-      previous = now;
-    }
-    const remaining = wait - (now - previous);
-
-    // eslint-disable-next-line prefer-rest-params, @typescript-eslint/no-explicit-any
-    const args = arguments as any;
-    if (remaining <= 0 || remaining > wait) {
-      if (timeout) {
-        window.clearTimeout(timeout);
-        timeout = null;
-      }
-      previous = now;
-      func.apply(this, args);
-    } else if (!timeout && options.trailing !== false) {
-      timeout = window.setTimeout(() => {
-        previous = options.leading === false ? 0 : Date.now();
-        timeout = null;
-        func.apply(this, args);
-      }, remaining);
-    }
-  };
 }
 
 function toModifiers(options: {
@@ -88,15 +51,24 @@ function isContentEditable(el: HTMLElement) {
 export class EventObserver {
   private win: Window;
   private doc: Document;
-  private onEmit: EmitHandler;
+  private onEmit: (
+    event: StepEvent,
+    target: HTMLElement | null,
+    fromThrottler?: boolean,
+  ) => void;
   private handlers: ResetHandler[] = [];
 
   private state: 'active' | 'inactive' | 'suspend' = 'inactive';
 
+  private throttleManager = new ThrottleManager();
+
   constructor(win: Window, doc: Document, onEmit: EmitHandler) {
     this.win = win;
     this.doc = doc;
-    this.onEmit = onEmit;
+    this.onEmit = (event, target, fromThrottler = false) => {
+      !fromThrottler && this.throttleManager.invokeAll();
+      onEmit(event, target);
+    };
   }
 
   public start(): void {
@@ -108,6 +80,7 @@ export class EventObserver {
       this.observeTextInput();
       this.observeBlur();
       this.observeBeforeUnload();
+      this.observeWheel();
     }
     this.state = 'active';
   }
@@ -153,7 +126,7 @@ export class EventObserver {
             clientX,
             clientY,
             modifiers: toModifiers(evt as MouseEvent),
-            timestamp: this.now(),
+            timestamp: this.now,
           },
           evt.target as HTMLElement,
         );
@@ -165,39 +138,47 @@ export class EventObserver {
   }
 
   private observeMousemove() {
+    const mousemoveSymbol = Symbol('mousemove');
+    const updatePosSymbol = Symbol('updatePos');
     let positions: MousemoveRecord[] = [];
     let timeBaseline: number | null = null;
 
-    const wrappedCb = throttle(() => {
-      if (!this.active) {
-        return;
-      }
-      this.onEmit(
-        {
-          type: 'MOUSEMOVE',
-          positions,
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          timestamp: timeBaseline!,
-        },
-        null,
-      );
-      positions = [];
-      timeBaseline = null;
-    }, 500);
+    const wrappedCb = this.throttleManager.getThrottle(
+      mousemoveSymbol,
+      () => {
+        if (!this.active) {
+          return;
+        }
+        this.onEmit(
+          {
+            type: 'MOUSEMOVE',
+            positions,
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            timestamp: timeBaseline!,
+          },
+          null,
+          true,
+        );
+        positions = [];
+        timeBaseline = null;
+      },
+      500,
+    );
 
-    const updatePosition = throttle<MouseEvent>(
+    const updatePosition = this.throttleManager.getThrottle<MouseEvent>(
+      updatePosSymbol,
       (evt) => {
         if (!this.active) {
           return;
         }
         const { clientX, clientY } = evt;
         if (!timeBaseline) {
-          timeBaseline = this.now();
+          timeBaseline = this.now;
         }
         positions.push({
           clientX,
           clientY,
-          timeOffset: this.now() - timeBaseline,
+          timeOffset: this.now - timeBaseline,
         });
         wrappedCb();
       },
@@ -211,37 +192,54 @@ export class EventObserver {
   }
 
   private observeScroll() {
-    const updatePosition = throttle<UIEvent>((evt) => {
-      if (!this.active) {
-        return;
-      }
-      if ((evt.target as HTMLElement).tagName === 'INPUT') {
-        return;
-      }
-      if (evt.target === this.doc) {
-        const scrollEl = this.doc.scrollingElement || this.doc.documentElement;
-        this.onEmit(
-          {
-            type: 'SCROLL',
-            scrollLeft: scrollEl.scrollLeft,
-            scrollTop: scrollEl.scrollTop,
-            timestamp: this.now(),
-          },
-          this.doc.body,
-        );
-      } else {
-        const target = evt.target as HTMLElement;
-        this.onEmit(
-          {
-            type: 'SCROLL',
-            scrollLeft: target.scrollLeft,
-            scrollTop: target.scrollTop,
-            timestamp: this.now(),
-          },
-          target,
-        );
-      }
-    }, 1000);
+    const symbolList = new Map<EventTarget | null, symbol>();
+    const updatePosition = this.throttleManager.getThrottle<UIEvent>(
+      (e: UIEvent) => {
+        if (!symbolList.has(e.target)) {
+          symbolList.set(e.target, Symbol());
+        }
+        return symbolList.get(e.target)!;
+      },
+      (evt) => {
+        if (!this.active) {
+          return;
+        }
+        /**
+         * We do not need scroll events in INPUT element
+         * Reference: testim's recorder
+         */
+        if ((evt.target as HTMLElement).tagName === 'INPUT') {
+          return;
+        }
+        if (evt.target === this.doc) {
+          const scrollEl =
+            this.doc.scrollingElement || this.doc.documentElement;
+          this.onEmit(
+            {
+              type: 'SCROLL',
+              scrollLeft: scrollEl.scrollLeft,
+              scrollTop: scrollEl.scrollTop,
+              timestamp: this.now,
+            },
+            this.doc.body,
+            true,
+          );
+        } else {
+          const target = evt.target as HTMLElement;
+          this.onEmit(
+            {
+              type: 'SCROLL',
+              scrollLeft: target.scrollLeft,
+              scrollTop: target.scrollTop,
+              timestamp: this.now,
+            },
+            target,
+            true,
+          );
+        }
+      },
+      1000,
+    );
     this.handlers.push(on('scroll', updatePosition, this.doc));
   }
 
@@ -259,7 +257,7 @@ export class EventObserver {
             code,
             keyCode,
             modifiers: toModifiers(evt as KeyboardEvent),
-            timestamp: this.now(),
+            timestamp: this.now,
           },
           evt.target as HTMLElement,
         );
@@ -286,7 +284,7 @@ export class EventObserver {
              * because you can find it in text change events
              */
             value: '',
-            timestamp: this.now(),
+            timestamp: this.now,
           },
           evt.target as HTMLElement,
         );
@@ -308,7 +306,7 @@ export class EventObserver {
           {
             type: 'TEXT_CHANGE',
             value: target.value,
-            timestamp: this.now(),
+            timestamp: this.now,
           },
           target,
         );
@@ -318,7 +316,7 @@ export class EventObserver {
           {
             type: 'TEXT_CHANGE',
             value: target.innerHTML,
-            timestamp: this.now(),
+            timestamp: this.now,
           },
           target,
         );
@@ -336,7 +334,7 @@ export class EventObserver {
       this.onEmit(
         {
           type: 'BLUR',
-          timestamp: this.now(),
+          timestamp: this.now,
         },
         null,
       );
@@ -353,7 +351,7 @@ export class EventObserver {
       this.onEmit(
         {
           type: 'BEFORE_UNLOAD',
-          timestamp: this.now(),
+          timestamp: this.now,
         },
         null,
       );
@@ -361,7 +359,43 @@ export class EventObserver {
     this.handlers.push(on('beforeunload', handler, this.win));
   }
 
-  private now() {
+  private observeWheel() {
+    const wheelSymbol = Symbol('wheel');
+    const handler = this.throttleManager.getThrottle(
+      wheelSymbol,
+      (evt: WheelEvent) => {
+        let target = evt.target as HTMLElement | null;
+        const attributes: [
+          'scrollHeight' | 'scrollWidth',
+          'clientHeight' | 'clientWidth',
+        ] = evt.deltaY
+          ? ['scrollHeight', 'clientHeight']
+          : ['scrollWidth', 'clientWidth'];
+        while (target) {
+          if (target[attributes[0]] > target[attributes[1]]) {
+            // get the real scrolling element for target;
+            break;
+          }
+          target = target.parentElement;
+        }
+        // if there is no element scrollable, do not emit the event;
+        if (target) {
+          this.onEmit(
+            {
+              type: 'WHEEL',
+              timestamp: this.now,
+            },
+            target,
+            true,
+          );
+        }
+      },
+      500,
+    );
+    this.handlers.push(on('wheel', handler, this.doc));
+  }
+
+  private get now() {
     return new Date().getTime();
   }
 

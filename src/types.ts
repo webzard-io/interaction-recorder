@@ -18,7 +18,9 @@ export type StepEvent =
   | TextChangeEvent
   | KeyupEvent
   | BlurEvent
-  | BeforeUnloadEvent;
+  | BeforeUnloadEvent
+  | HoverEvent
+  | WheelEvent;
 
 export type Modifiers = {
   // only record modifers when needed
@@ -112,4 +114,15 @@ export type BlurEvent = BaseEvent & {
 
 export type BeforeUnloadEvent = BaseEvent & {
   type: 'BEFORE_UNLOAD';
+};
+
+export type HoverEvent = BaseEvent & {
+  type: 'HOVER';
+  clientX: number;
+  clientY: number;
+  modifiers: Modifiers;
+};
+
+export type WheelEvent = BaseEvent & {
+  type: 'WHEEL';
 };
