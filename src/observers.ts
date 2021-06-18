@@ -91,7 +91,7 @@ export class EventObserver {
   private onEmit: EmitHandler;
   private handlers: ResetHandler[] = [];
 
-  private state: 'active' | 'inactive' = 'inactive';
+  private state: 'active' | 'inactive' | 'suspend' = 'inactive';
 
   constructor(win: Window, doc: Document, onEmit: EmitHandler) {
     this.win = win;
@@ -108,12 +108,18 @@ export class EventObserver {
       this.observeTextInput();
       this.observeBlur();
       this.observeBeforeUnload();
-      this.state = 'active';
+    }
+    this.state = 'active';
+  }
+
+  public suspend(): void {
+    if (this.active) {
+      this.state = 'suspend';
     }
   }
 
   public stop(): void {
-    if (this.state === 'active') {
+    if (this.state !== 'inactive') {
       this.handlers.forEach((h) => h());
       this.handlers.length = 0;
       this.state = 'inactive';
@@ -123,6 +129,9 @@ export class EventObserver {
   private observeMouseInteractions() {
     const getHandler = (type: 'MOUSEDOWN' | 'MOUSEUP' | 'CLICK') => {
       return (evt: Event) => {
+        if (!this.active) {
+          return;
+        }
         /**
          * According to the HTML standard, the <input /> element
          * inside a <label /> element will use the label as its
@@ -160,6 +169,9 @@ export class EventObserver {
     let timeBaseline: number | null = null;
 
     const wrappedCb = throttle(() => {
+      if (!this.active) {
+        return;
+      }
       this.onEmit(
         {
           type: 'MOUSEMOVE',
@@ -175,6 +187,9 @@ export class EventObserver {
 
     const updatePosition = throttle<MouseEvent>(
       (evt) => {
+        if (!this.active) {
+          return;
+        }
         const { clientX, clientY } = evt;
         if (!timeBaseline) {
           timeBaseline = this.now();
@@ -197,6 +212,9 @@ export class EventObserver {
 
   private observeScroll() {
     const updatePosition = throttle<UIEvent>((evt) => {
+      if (!this.active) {
+        return;
+      }
       if ((evt.target as HTMLElement).tagName === 'INPUT') {
         return;
       }
@@ -230,6 +248,9 @@ export class EventObserver {
   private observeKeyboardInteractions() {
     const getHandler = (type: 'KEYDOWN' | 'KEYPRESS' | 'KEYUP') => {
       return (evt: Event) => {
+        if (!this.active) {
+          return;
+        }
         const { key, code, keyCode } = evt as KeyboardEvent;
         this.onEmit(
           {
@@ -251,6 +272,9 @@ export class EventObserver {
 
   private observeTextInput() {
     const handler = (evt: Event) => {
+      if (!this.active) {
+        return;
+      }
       const { data } = evt as InputEvent;
       if (data !== null && data !== undefined && evt.target) {
         this.onEmit(
@@ -269,6 +293,9 @@ export class EventObserver {
       }
     };
     const changeHandler = (evt: Event) => {
+      if (!this.active) {
+        return;
+      }
       const target = evt.target as HTMLElement | null;
       if (!target) {
         return;
@@ -302,7 +329,10 @@ export class EventObserver {
   }
 
   private observeBlur() {
-    const handler = () =>
+    const handler = () => {
+      if (!this.active) {
+        return;
+      }
       this.onEmit(
         {
           type: 'BLUR',
@@ -310,11 +340,16 @@ export class EventObserver {
         },
         null,
       );
+    };
+
     this.handlers.push(on('blur', handler, this.doc));
   }
 
   private observeBeforeUnload() {
     const handler = () => {
+      if (!this.active) {
+        return;
+      }
       this.onEmit(
         {
           type: 'BEFORE_UNLOAD',
@@ -328,5 +363,9 @@ export class EventObserver {
 
   private now() {
     return new Date().getTime();
+  }
+
+  private get active(): boolean {
+    return this.state === 'active';
   }
 }
