@@ -117,24 +117,14 @@ export class Recorder {
     if (!target) {
       throw new Error('current target is missing');
     }
-    switch (action) {
-      case 'UNKNOWN':
-        console.error(`Unknown events: ${JSON.stringify(events)}`);
-        break;
-      case 'SCROLL':
-        this.onEmit({
-          selector: this.metaQuerier.getMeta(target),
-          action,
-          events: events.filter((event) => event.type === 'SCROLL'),
-        });
-        break;
-      default:
-        this.onEmit({
-          selector: this.metaQuerier.getMeta(target),
-          action,
-          events,
-        });
-        break;
+    if (action === 'UNKNOWN') {
+      console.error(`Unknown events: ${JSON.stringify(events)}`);
+    } else {
+      this.onEmit({
+        selector: this.metaQuerier.getMeta(target),
+        action,
+        events,
+      });
     }
   }
 }

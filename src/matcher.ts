@@ -79,6 +79,8 @@ export class PatternMatcher implements IMatcher {
     this.collectStep = new Map();
     this.patternMatcher = new Map();
     this.state = 'inactive';
+    this.currentEvents.length = 0;
+    this.currentTarget = null;
   }
 
   public extendAction(action: PatternMatcherExtendParams): void {
