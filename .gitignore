@@ -37,3 +37,4 @@ typings/
 
 # build output files
 build/*
+__tests__/manual/

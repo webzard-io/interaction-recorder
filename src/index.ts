@@ -1,130 +1,251 @@
-//  import { getSelector, Selector } from '@smoothie/selector';
-import {
-  matchPattern,
-  shouldStartNewOne,
-  isDragStep,
-  shouldStopCurrentOne,
-  needCollect,
-} from './match-pattern';
+import { PatternMatcher, PatternMatcherExtendParams } from './matcher';
 import { EventObserver } from './observers';
-import { Step, StepEvent } from './types';
-import { BasicMetaQuerier, IMetaQuerier } from './util/metaquerier';
+import { Recorder, RecorderOptions } from './recorder';
+import { StepEvent, Step } from './types';
 
-type StepEventHandler = (step: Step) => void;
+export * from './matcher';
+export * from './observers';
+export * from './types';
+export * from './recorder';
 
-export type RecorderOptions = {
-  win: Window;
-  doc: Document;
-  onEmit: StepEventHandler;
-  metaQuerier?: IMetaQuerier;
-};
+export class SimpleRecorder {
+  private _observer: EventObserver;
+  public get observer(): EventObserver {
+    return this._observer;
+  }
 
-export class Recorder {
-  private eventObserver: EventObserver;
+  private _recorder: Recorder;
+  public get recorder(): Recorder {
+    return this._recorder;
+  }
 
-  private currentTarget: HTMLElement | null = null;
-  private currentEvents: StepEvent[] = [];
+  constructor(
+    win: Window,
+    doc: Document,
+    options: Omit<RecorderOptions, 'matcher'>,
+  ) {
+    this._observer = new EventObserver(win, doc);
 
-  private onEmit: StepEventHandler;
-  private metaQuerier: IMetaQuerier;
+    this._recorder = new Recorder({
+      ...options,
+      matcher: new PatternMatcher(),
+    });
 
-  constructor(options: RecorderOptions) {
-    const { win, doc, onEmit, metaQuerier } = options;
-    this.onEmit = onEmit;
-    this.eventObserver = new EventObserver(
-      win,
-      doc,
-      this.eventHandler.bind(this),
-    );
-    this.metaQuerier = metaQuerier || new BasicMetaQuerier();
+    this._recorder.extendAction<PatternMatcherExtendParams>({
+      observer: this._observer,
+      pattern: matchPattern,
+      preStep: ({ currentEvents, currentTarget }, newEvent, target) => {
+        const isTargetChanged = currentTarget !== target;
+        /**
+         * according to current implementation a scroll step won't be the first step for any type of event;
+         * a scroll event must be started by a wheel or mouseup event share the same target;
+         */
+        if (newEvent.type === 'SCROLL' && isTargetChanged) {
+          /**
+           * ignore other scroll steps on other element when there is already a scroll event;
+           */
+          return 'return';
+        } else if (
+          newEvent.type === 'WHEEL' &&
+          !isTargetChanged &&
+          currentEvents.length &&
+          currentEvents[0].type === 'WHEEL'
+        ) {
+          /**
+           * ignore extra wheel event share the same target;
+           */
+          return 'return';
+        }
+        // /**
+        if (shouldStartNewOne(currentEvents, newEvent, isTargetChanged)) {
+          return 'emit';
+        }
+      },
+      collectStep: ({ currentEvents }, newEvent) => {
+        if (
+          newEvent.type === 'MOUSEMOVE' &&
+          !isDragStep(currentEvents, newEvent)
+        ) {
+          return 'return';
+        }
+        if (needCollect(newEvent)) {
+          return 'collect';
+        }
+      },
+      postStep: ({ currentEvents }) => {
+        if (shouldStopCurrentOne(currentEvents)) {
+          return 'emit';
+        }
+      },
+    });
   }
 
   public start(): void {
-    this.eventObserver.start();
+    this._recorder.start();
   }
 
+  public suspend(): void {
+    this._recorder.suspend();
+  }
   public stop(): void {
-    this.eventObserver.stop();
+    this._recorder.stop();
+  }
+}
+
+const keyboardSet = new Set([
+  'KEYDOWN',
+  'KEYPRESS',
+  'KEYUP',
+  'TEXT_INPUT',
+  'TEXT_CHANGE',
+]);
+
+function matchPattern(events: StepEvent[]): Step['action'] | 'UNKNOWN' {
+  const len = events.length;
+  if (!len) {
+    throw new Error('No events found');
   }
 
-  private eventHandler(stepEvent: StepEvent, target: HTMLElement | null) {
-    const isTargetChanged = this.currentTarget !== target;
-    /**
-     * according to current implementation a scroll step won't be the first step for any type of event;
-     * a scroll event must be started by a wheel or mouseup event share the same target;
-     */
-    if (stepEvent.type === 'SCROLL' && this.currentTarget !== target) {
-      /**
-       * ignore other scroll steps on other element when there is already a scroll event;
-       */
-      return;
-    } else if (
-      stepEvent.type === 'WHEEL' &&
-      target === this.currentTarget &&
-      this.currentEvents.length &&
-      this.currentEvents[0].type === 'WHEEL'
-    ) {
-      /**
-       * ignore extra wheel event share the same target;
-       */
-      return;
-    }
-    /**
-     * When a new step event should start a new step,
-     * we also stop the current one.
-     */
-    if (shouldStartNewOne(this.currentEvents, stepEvent, isTargetChanged)) {
-      this.emitCurrentStep();
-    }
-
-    /**
-     * Only track MOUSEMOVE when current step is DRAG
-     */
-    const isDragMove = isDragStep(this.currentEvents, stepEvent);
-    if (stepEvent.type === 'MOUSEMOVE' && !isDragMove) {
-      return;
-    }
-
-    this.collectEvent(stepEvent, target);
-
-    if (shouldStopCurrentOne(this.currentEvents)) {
-      this.emitCurrentStep();
-    }
+  /**
+   * CLICK
+   * [MOUSEDOWN, MOUSEUP, CLICK]
+   * [CLICK]
+   */
+  if (
+    events[0].type === 'MOUSEDOWN' &&
+    events[1]?.type === 'MOUSEUP' &&
+    events[2]?.type === 'CLICK'
+  ) {
+    return 'CLICK';
+  }
+  if (events[0].type === 'CLICK') {
+    return 'CLICK';
   }
 
-  private collectEvent(stepEvent: StepEvent, target: HTMLElement | null) {
-    if (!needCollect(stepEvent)) {
-      return;
-    }
-    this.currentTarget = target;
-    this.currentEvents.push(stepEvent);
+  /**
+   * DRAG
+   * [MOUSEDOWN, MOUSEMOVE * n, MOUSEUP, CLICK]
+   */
+  if (
+    events[0].type === 'MOUSEDOWN' &&
+    events.slice(1, len - 2).every((e) => e.type === 'MOUSEMOVE') &&
+    events[len - 2]?.type === 'MOUSEUP' &&
+    events[len - 1]?.type === 'CLICK'
+  ) {
+    return 'DRAG';
   }
 
-  private emitCurrentStep() {
-    if (!this.currentTarget) {
-      throw new Error('current target is missing');
-    }
-    const { action } = matchPattern(this.currentEvents);
-    switch (action) {
-      case 'UNKNOWN':
-        console.error(`Unknown events: ${JSON.stringify(this.currentEvents)}`);
-        break;
-      case 'SCROLL':
-        this.onEmit({
-          selector: this.metaQuerier.getMeta(this.currentTarget),
-          action,
-          events: this.currentEvents,
-        });
-        break;
-      default:
-        this.onEmit({
-          selector: this.metaQuerier.getMeta(this.currentTarget),
-          action,
-          events: this.currentEvents.filter((event) => event.type === 'SCROLL'),
-        });
-        break;
-    }
-    this.currentTarget = null;
-    this.currentEvents = [];
+  /**
+   * SCROLL
+   * [WHELL] [SCROLL * n]
+   * [MOUSEDOWN] [SCROLL * n] [MOUSEUP]
+   */
+  if (
+    (events[0].type === 'WHEEL' &&
+      events.slice(1, len).every((e) => e.type === 'SCROLL')) ||
+    (events[0].type === 'MOUSEDOWN' &&
+      events[len - 1].type === 'MOUSEUP' &&
+      events.slice(1, len - 1).every((e) => e.type === 'SCROLL'))
+  ) {
+    return 'SCROLL';
   }
+
+  /**
+   * TEXT
+   * [Keyboard * n]
+   */
+  if (events.every((e) => keyboardSet.has(e.type))) {
+    return 'TEXT';
+  }
+
+  return 'UNKNOWN';
+}
+
+function shouldStartNewOne(
+  events: StepEvent[],
+  newEvent: StepEvent,
+  isTargetChanged: boolean,
+): boolean {
+  if (!events.length) {
+    return false;
+  }
+  const lastEvent = events[events.length - 1];
+  /**
+   * MOUSEDOWN indicates a new click, which should be an new step
+   */
+  if (newEvent.type === 'MOUSEDOWN') {
+    return true;
+  }
+  /**
+   * SCROLL should be a new step
+   */
+  if (newEvent.type === 'WHEEL' && isTargetChanged) {
+    return true;
+  }
+  /**
+   * need to send step before unload
+   */
+  if (newEvent.type === 'BEFORE_UNLOAD') {
+    return true;
+  }
+  /**
+   * a KEYDOWN follows non-keyboard event should be a new step
+   */
+  if (newEvent.type === 'KEYDOWN' && !keyboardSet.has(lastEvent.type)) {
+    return true;
+  }
+  /**
+   * a BLUR follows TEXT INPUT should be a new step
+   */
+  if (
+    newEvent.type === 'BLUR' &&
+    events.some((e) => e.type === 'TEXT_INPUT' || e.type === 'TEXT_CHANGE')
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function isDragStep(events: StepEvent[], newEvent: StepEvent): boolean {
+  if (!events.length) {
+    return false;
+  }
+  if (
+    events[0].type === 'MOUSEDOWN' &&
+    events[0].timestamp < newEvent.timestamp &&
+    events.slice(1).every((e) => e.type === 'MOUSEMOVE')
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function shouldStopCurrentOne(events: StepEvent[]): boolean {
+  if (!events.length) {
+    return false;
+  }
+
+  const firstEvent = events[0];
+  const lastEvent = events[events.length - 1];
+  /**
+   * CLICK is the last event of a click action
+   */
+  if (lastEvent.type === 'CLICK') {
+    return true;
+  }
+  /**
+   * SCROLL event by middle mouse button click
+   */
+  if (
+    lastEvent.type === 'MOUSEUP' &&
+    firstEvent.type === 'MOUSEDOWN' &&
+    events[events.length - 2].type === 'SCROLL'
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function needCollect(event: StepEvent): boolean {
+  return !['BLUR', 'BEFORE_UNLOAD'].includes(event.type);
 }

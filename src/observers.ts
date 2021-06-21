@@ -1,32 +1,7 @@
-import { Modifiers, StepEvent, MousemoveRecord } from './types';
+import { StepEvent, MousemoveRecord } from './types';
 import { ThrottleManager } from './util/throttler';
-
-type ResetHandler = () => void;
-type EmitHandler = (event: StepEvent, target: HTMLElement | null) => void;
-
-function on(
-  type: string,
-  fn: EventListenerOrEventListenerObject,
-  target: Document | Window,
-): ResetHandler {
-  const options = { capture: true, passive: true };
-  target.addEventListener(type, fn, options);
-  return () => target.removeEventListener(type, fn, options);
-}
-
-function toModifiers(options: {
-  ctrlKey: boolean;
-  shiftKey: boolean;
-  altKey: boolean;
-  metaKey: boolean;
-}): Modifiers {
-  return {
-    ctrl: options.ctrlKey || undefined,
-    alt: options.altKey || undefined,
-    shift: options.shiftKey || undefined,
-    meta: options.metaKey || undefined,
-  };
-}
+import { EventEmitter2 } from 'eventemitter2';
+import { on, ResetHandler, toModifiers } from './util/fn';
 
 function isFileInput(el: HTMLElement): el is HTMLInputElement {
   return el.tagName === 'INPUT' && (el as HTMLInputElement).type === 'file';
@@ -48,9 +23,21 @@ function isContentEditable(el: HTMLElement) {
   return el.contentEditable === 'true';
 }
 
-export class EventObserver {
+export interface IObserver {
+  name: string;
+  emitter?: EventEmitter2;
+  start(): void;
+  stop(): void;
+  suspend(): void;
+}
+
+export class EventObserver implements IObserver {
+  public name = 'Event';
+  public emitter?: EventEmitter2;
+
   private win: Window;
   private doc: Document;
+
   private onEmit: (
     event: StepEvent,
     target: HTMLElement | null,
@@ -62,12 +49,15 @@ export class EventObserver {
 
   private throttleManager = new ThrottleManager();
 
-  constructor(win: Window, doc: Document, onEmit: EmitHandler) {
+  constructor(win: Window, doc: Document) {
     this.win = win;
     this.doc = doc;
     this.onEmit = (event, target, fromThrottler = false) => {
+      if (!this.emitter) {
+        throw new Error('Observer not registered, failed to fire event');
+      }
       !fromThrottler && this.throttleManager.invokeAll();
-      onEmit(event, target);
+      this.emitter.emit(`observer.${this.name}`, event, target);
     };
   }
 
@@ -132,9 +122,9 @@ export class EventObserver {
         );
       };
     };
-    this.handlers.push(on('mousedown', getHandler('MOUSEDOWN'), this.doc));
-    this.handlers.push(on('mouseup', getHandler('MOUSEUP'), this.doc));
-    this.handlers.push(on('click', getHandler('CLICK'), this.doc));
+    this.handlers.push(on('mousedown', getHandler('MOUSEDOWN'), this.win));
+    this.handlers.push(on('mouseup', getHandler('MOUSEUP'), this.win));
+    this.handlers.push(on('click', getHandler('CLICK'), this.win));
   }
 
   private observeMousemove() {
@@ -188,7 +178,7 @@ export class EventObserver {
       },
     );
 
-    this.handlers.push(on('mousemove', updatePosition, this.doc));
+    this.handlers.push(on('mousemove', updatePosition, this.win));
   }
 
   private observeScroll() {
@@ -198,6 +188,7 @@ export class EventObserver {
         if (!symbolList.has(e.target)) {
           symbolList.set(e.target, Symbol());
         }
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return symbolList.get(e.target)!;
       },
       (evt) => {
@@ -240,7 +231,7 @@ export class EventObserver {
       },
       1000,
     );
-    this.handlers.push(on('scroll', updatePosition, this.doc));
+    this.handlers.push(on('scroll', updatePosition, this.win));
   }
 
   private observeKeyboardInteractions() {
@@ -263,9 +254,9 @@ export class EventObserver {
         );
       };
     };
-    this.handlers.push(on('keydown', getHandler('KEYDOWN'), this.doc));
-    this.handlers.push(on('keypress', getHandler('KEYPRESS'), this.doc));
-    this.handlers.push(on('keyup', getHandler('KEYUP'), this.doc));
+    this.handlers.push(on('keydown', getHandler('KEYDOWN'), this.win));
+    this.handlers.push(on('keypress', getHandler('KEYPRESS'), this.win));
+    this.handlers.push(on('keyup', getHandler('KEYUP'), this.win));
   }
 
   private observeTextInput() {
@@ -322,8 +313,8 @@ export class EventObserver {
         );
       }
     };
-    this.handlers.push(on('input', handler, this.doc));
-    this.handlers.push(on('input', changeHandler, this.doc));
+    this.handlers.push(on('input', handler, this.win));
+    this.handlers.push(on('input', changeHandler, this.win));
   }
 
   private observeBlur() {
@@ -340,7 +331,7 @@ export class EventObserver {
       );
     };
 
-    this.handlers.push(on('blur', handler, this.doc));
+    this.handlers.push(on('blur', handler, this.win));
   }
 
   private observeBeforeUnload() {
@@ -392,7 +383,7 @@ export class EventObserver {
       },
       500,
     );
-    this.handlers.push(on('wheel', handler, this.doc));
+    this.handlers.push(on('wheel', handler, this.win));
   }
 
   private get now() {
