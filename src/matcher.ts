@@ -18,17 +18,17 @@ export interface IExtendParams {
 }
 export type PatternMatcherExtendParams = IExtendParams & {
   pattern?: (steps: StepEvent[]) => Step['action'] | 'UNKNOWN';
-  preStep?: (
+  actionBeforeCollectStep?: (
     matcher: PatternMatcher,
     newEvent: StepEvent,
     target: HTMLElement | null,
   ) => 'return' | 'emit' | undefined;
-  collectStep?: (
+  actionWhileCollectStep?: (
     matcher: PatternMatcher,
     newEvent: StepEvent,
     target: HTMLElement | null,
   ) => 'return' | 'collect' | undefined;
-  postStep?: (
+  actionAfterCollectStep?: (
     matcher: PatternMatcher,
     newEvent: StepEvent,
     target: HTMLElement | null,
@@ -40,14 +40,18 @@ export class PatternMatcher implements IMatcher {
   public currentTarget: HTMLElement | null = null;
   public currentEvents: StepEvent[] = [];
 
-  private preStep: Map<IObserver, PatternMatcherExtendParams['preStep']> =
-    new Map();
-  private collectStep: Map<
+  private actionBeforeCollectStep: Map<
     IObserver,
-    PatternMatcherExtendParams['collectStep']
+    PatternMatcherExtendParams['actionBeforeCollectStep']
   > = new Map();
-  private postStep: Map<IObserver, PatternMatcherExtendParams['postStep']> =
-    new Map();
+  private actionWhileCollectStep: Map<
+    IObserver,
+    PatternMatcherExtendParams['actionWhileCollectStep']
+  > = new Map();
+  private actionAfterCollectStep: Map<
+    IObserver,
+    PatternMatcherExtendParams['actionAfterCollectStep']
+  > = new Map();
 
   private patternMatcher: Map<
     IObserver,
@@ -69,14 +73,16 @@ export class PatternMatcher implements IMatcher {
   }
 
   public suspend(): void {
-    this.state = 'suspend';
+    if (this.state === 'active') {
+      this.state = 'suspend';
+    }
   }
 
   public stop(): void {
     this.emitter?.removeAllListeners();
-    this.preStep = new Map();
-    this.postStep = new Map();
-    this.collectStep = new Map();
+    this.actionBeforeCollectStep = new Map();
+    this.actionAfterCollectStep = new Map();
+    this.actionWhileCollectStep = new Map();
     this.patternMatcher = new Map();
     this.state = 'inactive';
     this.currentEvents.length = 0;
@@ -84,17 +90,26 @@ export class PatternMatcher implements IMatcher {
   }
 
   public extendAction(action: PatternMatcherExtendParams): void {
-    const { observer, preStep, collectStep, postStep, pattern } = action;
-    preStep && this.preStep.set(observer, preStep);
-    collectStep && this.collectStep.set(observer, collectStep);
-    postStep && this.postStep.set(observer, postStep);
+    const {
+      observer,
+      actionBeforeCollectStep,
+      actionWhileCollectStep,
+      actionAfterCollectStep,
+      pattern,
+    } = action;
+    actionBeforeCollectStep &&
+      this.actionBeforeCollectStep.set(observer, actionBeforeCollectStep);
+    actionWhileCollectStep &&
+      this.actionWhileCollectStep.set(observer, actionWhileCollectStep);
+    actionAfterCollectStep &&
+      this.actionAfterCollectStep.set(observer, actionAfterCollectStep);
     pattern && this.patternMatcher.set(observer, pattern);
   }
 
   public removeAction(observer: IObserver): void {
-    this.preStep.delete(observer);
-    this.collectStep.delete(observer);
-    this.postStep.delete(observer);
+    this.actionBeforeCollectStep.delete(observer);
+    this.actionWhileCollectStep.delete(observer);
+    this.actionAfterCollectStep.delete(observer);
     this.patternMatcher.delete(observer);
   }
 
@@ -124,7 +139,7 @@ export class PatternMatcher implements IMatcher {
   }
 
   private handleNewEvent(stepEvent: StepEvent, target: HTMLElement | null) {
-    for (const [, handler] of this.preStep) {
+    for (const [, handler] of this.actionBeforeCollectStep) {
       const result = handler && handler(this, stepEvent, target);
       if (!result) {
         continue;
@@ -136,7 +151,7 @@ export class PatternMatcher implements IMatcher {
       }
     }
 
-    for (const [, handler] of this.collectStep) {
+    for (const [, handler] of this.actionWhileCollectStep) {
       const result = handler && handler(this, stepEvent, target);
       if (!result) {
         continue;
@@ -148,7 +163,7 @@ export class PatternMatcher implements IMatcher {
       }
     }
 
-    for (const [, handler] of this.postStep) {
+    for (const [, handler] of this.actionAfterCollectStep) {
       const result = handler && handler(this, stepEvent, target);
       if (!result) {
         continue;

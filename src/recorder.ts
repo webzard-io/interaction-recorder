@@ -1,4 +1,4 @@
-import { EventEmitter2 } from 'eventemitter2';
+import { EventEmitter2, Listener } from 'eventemitter2';
 import { IExtendParams, IMatcher } from './matcher';
 import { IObserver } from './observers';
 import { MatcherKey, Step, StepEvent } from './types';
@@ -14,14 +14,18 @@ export type RecorderOptions = {
 
 export class Recorder {
   private observersList: IObserver[] = [];
-  private emitterMap: WeakMap<IObserver, EventEmitter2> = new WeakMap();
+  private listenerMap: WeakMap<IObserver, Listener> = new WeakMap();
 
   private matcher: IMatcher;
 
   private onEmit: StepEventHandler;
   private metaQuerier: IMetaQuerier;
 
-  private state: 'active' | 'inactive' | 'suspend' = 'inactive';
+  private _state: 'active' | 'inactive' | 'suspend' = 'inactive';
+
+  public get state(): 'active' | 'inactive' | 'suspend' {
+    return this._state;
+  }
 
   constructor(options: RecorderOptions) {
     const { matcher, onEmit, metaQuerier } = options;
@@ -42,7 +46,7 @@ export class Recorder {
   }
 
   public start(): void {
-    this.state = 'active';
+    this._state = 'active';
     this.observersList.forEach((obs) => {
       obs.start();
     });
@@ -50,7 +54,7 @@ export class Recorder {
   }
 
   public suspend(): void {
-    this.state = 'suspend';
+    this._state = 'suspend';
     this.observersList.forEach((obs) => {
       obs.suspend();
     });
@@ -58,7 +62,7 @@ export class Recorder {
   }
 
   public stop(): void {
-    this.state = 'inactive';
+    this._state = 'inactive';
     this.observersList.forEach((obs) => {
       obs.stop();
     });
@@ -67,40 +71,46 @@ export class Recorder {
 
   public extendAction<params extends IExtendParams>(action: params): IObserver {
     const { observer } = action;
-    if (this.state === 'active') {
+    if (this._state === 'active') {
       console.warn(
         'cannot extend recorder when active, please suspend or stop recorder first',
       );
       return observer;
     }
-    if (this.emitterMap.has(observer)) {
+    if (this.listenerMap.has(observer)) {
       console.warn('the observer has been extended.');
       return observer;
     }
     // add observer emitter;
     this.observersList.push(observer);
-    observer.emitter = new EventEmitter2();
-    observer.emitter.on(
+    const listener = observer.emitter.on(
       `observer.${observer.name}`,
       (event: StepEvent, target: HTMLElement | null) => {
-        this.matcher.emitter?.emit(MatcherKey.NEW_EVENT, event, target);
+        this.matcher.emitter!.emit(MatcherKey.NEW_EVENT, event, target);
       },
-    );
+      {
+        objectify: true,
+      },
+    ) as Listener;
+
+    this.listenerMap.set(observer, listener);
     // extend matcher
     this.matcher.extendAction(action);
     return observer;
   }
 
   public removeAction(observer: IObserver): void {
-    if (this.state === 'active') {
+    if (this._state === 'active') {
       console.warn(
         'cannot extend recorder when active, please suspend or stop recorder first',
       );
       return;
     }
     // remove observer emitter;
-    const emitter = this.emitterMap.get(observer);
-    emitter?.removeAllListeners();
+    const listener = this.listenerMap.get(observer);
+    listener &&
+      observer.emitter.off(`observer.${observer.name}`, listener.listener);
+    this.listenerMap.delete(observer);
     const index = this.observersList.indexOf(observer);
     if (index !== -1) {
       this.observersList.splice(index, 1);

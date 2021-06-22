@@ -12,5 +12,6 @@ module.exports = {
   testPathIgnorePatterns: ['/node_modules/', '/build/', '<rootDir>/build/'],
   collectCoverageFrom: ['<rootDir>/src/**/*.ts'],
   coverageReporters: ['text-summary', 'lcov'],
-  collectCoverage: Boolean(process.env.COVERAGE),
+  collectCoverage: true,//Boolean(process.env.COVERAGE),
+  coverageDirectory :'./__tests__/coverage'
 }

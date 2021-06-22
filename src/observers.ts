@@ -25,7 +25,7 @@ function isContentEditable(el: HTMLElement) {
 
 export interface IObserver {
   name: string;
-  emitter?: EventEmitter2;
+  emitter: EventEmitter2;
   start(): void;
   stop(): void;
   suspend(): void;
@@ -33,10 +33,9 @@ export interface IObserver {
 
 export class EventObserver implements IObserver {
   public name = 'Event';
-  public emitter?: EventEmitter2;
+  public emitter = new EventEmitter2();
 
   private win: Window;
-  private doc: Document;
 
   private onEmit: (
     event: StepEvent,
@@ -49,13 +48,9 @@ export class EventObserver implements IObserver {
 
   private throttleManager = new ThrottleManager();
 
-  constructor(win: Window, doc: Document) {
+  constructor(win: Window) {
     this.win = win;
-    this.doc = doc;
     this.onEmit = (event, target, fromThrottler = false) => {
-      if (!this.emitter) {
-        throw new Error('Observer not registered, failed to fire event');
-      }
       !fromThrottler && this.throttleManager.invokeAll();
       this.emitter.emit(`observer.${this.name}`, event, target);
     };
@@ -202,9 +197,10 @@ export class EventObserver implements IObserver {
         if ((evt.target as HTMLElement).tagName === 'INPUT') {
           return;
         }
-        if (evt.target === this.doc) {
+        if (evt.target === this.win.document) {
           const scrollEl =
-            this.doc.scrollingElement || this.doc.documentElement;
+            this.win.document.scrollingElement ||
+            this.win.document.documentElement;
           this.onEmit(
             {
               type: 'SCROLL',
@@ -212,7 +208,7 @@ export class EventObserver implements IObserver {
               scrollTop: scrollEl.scrollTop,
               timestamp: this.now,
             },
-            this.doc.body,
+            this.win.document.body,
             true,
           );
         } else {
