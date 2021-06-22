@@ -1,6 +1,7 @@
-import { init } from '../../src';
-describe('init utils test env', () => {
-  it('first test', () => {
-    expect(init()).not.toBeNull();
-  })
-})
+import { PatternMatcher } from '../../src/matcher';
+describe('Matcher', () => {
+  it('Create an instance', () => {
+    const matcher = new PatternMatcher();
+    expect(matcher).not.toBeNull();
+  });
+});
