@@ -1,5 +1,10 @@
 import { IMeta } from './util/metaquerier';
 
+export enum MatcherKey {
+  NEW_EVENT = 'matcher.newEvent',
+  EMIT = 'matchere.emit',
+}
+
 export type Step = {
   selector: IMeta;
   action: 'CLICK' | 'DRAG' | 'SCROLL' | 'TEXT';

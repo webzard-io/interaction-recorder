@@ -1,7 +1,7 @@
 import { EventEmitter2 } from 'eventemitter2';
 import { IExtendParams, IMatcher } from './matcher';
 import { IObserver } from './observers';
-import { Step, StepEvent } from './types';
+import { MatcherKey, Step, StepEvent } from './types';
 import { BasicMetaQuerier, IMetaQuerier } from './util/metaquerier';
 
 type StepEventHandler = (step: Step) => void;
@@ -29,7 +29,7 @@ export class Recorder {
     this.matcher.emitter = new EventEmitter2();
     this.onEmit = onEmit;
     this.matcher.emitter.on(
-      'matcher.emit',
+      MatcherKey.EMIT,
       (
         action: Step['action'] | 'UNKNOWN',
         events: StepEvent[],
@@ -83,7 +83,7 @@ export class Recorder {
     observer.emitter.on(
       `observer.${observer.name}`,
       (event: StepEvent, target: HTMLElement | null) => {
-        this.matcher.emitter?.emit('matcher.newEvent', event, target);
+        this.matcher.emitter?.emit(MatcherKey.NEW_EVENT, event, target);
       },
     );
     // extend matcher

@@ -1,6 +1,6 @@
 import { EventEmitter2 } from 'eventemitter2';
 import { IObserver } from './observers';
-import { Step, StepEvent } from './types';
+import { MatcherKey, Step, StepEvent } from './types';
 
 export interface IMatcher {
   emitter?: EventEmitter2;
@@ -59,7 +59,7 @@ export class PatternMatcher implements IMatcher {
   public start(): void {
     if (this.state === 'inactive') {
       this.emitter?.addListener(
-        'matcher.newEvent',
+        MatcherKey.NEW_EVENT,
         (event: StepEvent, target: HTMLElement | null) => {
           this.handleNewEvent(event, target);
         },
@@ -116,7 +116,7 @@ export class PatternMatcher implements IMatcher {
   private emitCurrentStep() {
     const { action } = this.matchPattern();
     this.emitter?.emit(
-      'matcher.emit',
+      MatcherKey.EMIT,
       action,
       this.currentEvents.splice(0, this.currentEvents.length),
       this.currentTarget,
