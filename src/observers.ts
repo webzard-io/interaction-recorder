@@ -351,6 +351,9 @@ export class EventObserver implements IObserver {
     const handler = this.throttleManager.getThrottle(
       wheelSymbol,
       (evt: WheelEvent) => {
+        if (!this.active) {
+          return;
+        }
         let target = evt.target as HTMLElement | null;
         const attributes: [
           'scrollHeight' | 'scrollWidth',

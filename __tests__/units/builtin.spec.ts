@@ -7,4 +7,12 @@ describe('Built-in recorder', () => {
   it('should create an instance', () => {
     expect(recorder).not.toBeFalsy();
   });
+
+  it('should able to get observer', () => {
+    expect(recorder.observer).not.toBeFalsy();
+  });
+
+  it('should able to get recorder', () => {
+    expect(recorder.recorder).not.toBeFalsy();
+  });
 });
