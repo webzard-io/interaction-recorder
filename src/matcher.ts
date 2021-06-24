@@ -16,23 +16,36 @@ export type PatternInterceptor = (matcher: IMatcher) => boolean;
 export interface IExtendParams {
   observer: IObserver;
 }
+
+export enum EmitAction {
+  RETURN = 1,
+  EMIT = 2,
+  CONTINUE = 3,
+}
+
+export enum CollectAction {
+  RETURN = 1,
+  COLLECT = 2,
+  CONTINUE = 3,
+}
+
 export type PatternMatcherExtendParams = IExtendParams & {
   pattern?: (steps: StepEvent[]) => Step['action'] | 'UNKNOWN';
   actionBeforeCollectStep?: (
     matcher: PatternMatcher,
     newEvent: StepEvent,
     target: HTMLElement | null,
-  ) => 'return' | 'emit' | undefined;
+  ) => EmitAction;
   actionWhileCollectStep?: (
     matcher: PatternMatcher,
     newEvent: StepEvent,
     target: HTMLElement | null,
-  ) => 'return' | 'collect' | undefined;
+  ) => CollectAction;
   actionAfterCollectStep?: (
     matcher: PatternMatcher,
     newEvent: StepEvent,
     target: HTMLElement | null,
-  ) => 'return' | 'emit' | undefined;
+  ) => EmitAction;
 };
 
 export class PatternMatcher implements IMatcher {
@@ -141,11 +154,11 @@ export class PatternMatcher implements IMatcher {
   private handleNewEvent(stepEvent: StepEvent, target: HTMLElement | null) {
     for (const [, handler] of this.actionBeforeCollectStep) {
       const result = handler && handler(this, stepEvent, target);
-      if (!result) {
+      if (result === EmitAction.CONTINUE) {
         continue;
-      } else if (result === 'return') {
+      } else if (result === EmitAction.RETURN) {
         return;
-      } else if (result === 'emit') {
+      } else if (result === EmitAction.EMIT) {
         this.emitCurrentStep();
         break;
       }
@@ -153,11 +166,11 @@ export class PatternMatcher implements IMatcher {
 
     for (const [, handler] of this.actionWhileCollectStep) {
       const result = handler && handler(this, stepEvent, target);
-      if (!result) {
+      if (result === CollectAction.CONTINUE) {
         continue;
-      } else if (result === 'return') {
+      } else if (result === CollectAction.RETURN) {
         return;
-      } else if (result === 'collect') {
+      } else if (result === CollectAction.COLLECT) {
         this.collectEvent(stepEvent, target);
         break;
       }
@@ -165,11 +178,11 @@ export class PatternMatcher implements IMatcher {
 
     for (const [, handler] of this.actionAfterCollectStep) {
       const result = handler && handler(this, stepEvent, target);
-      if (!result) {
+      if (result === EmitAction.CONTINUE) {
         continue;
-      } else if (result === 'return') {
+      } else if (result === EmitAction.RETURN) {
         return;
-      } else if (result === 'emit') {
+      } else if (result === EmitAction.EMIT) {
         this.emitCurrentStep();
         break;
       }

@@ -5,6 +5,8 @@ import {
   MatcherKey,
   StepEvent,
   Step,
+  EmitAction,
+  CollectAction,
 } from '../../src/index';
 import { getMockedObserver } from '../util/mock';
 let matcher: PatternMatcher;
@@ -12,9 +14,9 @@ let matcher: PatternMatcher;
 const buildParams = (
   pattern?: Step['action'] | 'UNKNOWN',
   options: {
-    actionBeforeCollectStep?: 'return' | 'emit';
-    actionWhileCollectStep?: 'return' | 'collect';
-    actionAfterCollectStep?: 'return' | 'emit';
+    actionBeforeCollectStep?: EmitAction;
+    actionWhileCollectStep?: CollectAction;
+    actionAfterCollectStep?: EmitAction;
   } = {},
 ): PatternMatcherExtendParams => {
   const observer = getMockedObserver();
@@ -104,9 +106,9 @@ describe('PatternMatcher', () => {
       const collectSpy = jest.spyOn<any, any>(matcher, 'collectEvent');
       const emitSpy = jest.spyOn<any, any>(matcher, 'emitCurrentStep');
       const params = buildParams('UNKNOWN', {
-        actionBeforeCollectStep: 'return',
-        actionWhileCollectStep: 'collect',
-        actionAfterCollectStep: 'emit',
+        actionBeforeCollectStep: EmitAction.RETURN,
+        actionWhileCollectStep: CollectAction.COLLECT,
+        actionAfterCollectStep: EmitAction.EMIT,
       });
 
       matcher.extendAction(params);
@@ -123,8 +125,8 @@ describe('PatternMatcher', () => {
       const emitSpy = jest.spyOn<any, any>(matcher, 'emitCurrentStep');
       const collectSpy = jest.spyOn<any, any>(matcher, 'collectEvent');
       const params = buildParams('UNKNOWN', {
-        actionBeforeCollectStep: 'emit',
-        actionWhileCollectStep: 'collect',
+        actionBeforeCollectStep: EmitAction.EMIT,
+        actionWhileCollectStep: CollectAction.COLLECT,
       });
 
       matcher.extendAction(params);
@@ -144,8 +146,8 @@ describe('PatternMatcher', () => {
       const collectSpy = jest.spyOn<any, any>(matcher, 'collectEvent');
       const emitSpy = jest.spyOn<any, any>(matcher, 'emitCurrentStep');
       const params = buildParams('UNKNOWN', {
-        actionWhileCollectStep: 'collect',
-        actionAfterCollectStep: 'emit',
+        actionWhileCollectStep: CollectAction.COLLECT,
+        actionAfterCollectStep: EmitAction.EMIT,
       });
 
       matcher.extendAction(params);
@@ -165,8 +167,8 @@ describe('PatternMatcher', () => {
       const collectSpy = jest.spyOn<any, any>(matcher, 'collectEvent');
       const emitSpy = jest.spyOn<any, any>(matcher, 'emitCurrentStep');
       const params = buildParams('UNKNOWN', {
-        actionWhileCollectStep: 'return',
-        actionAfterCollectStep: 'emit',
+        actionWhileCollectStep: CollectAction.RETURN,
+        actionAfterCollectStep: EmitAction.EMIT,
       });
 
       matcher.extendAction(params);
@@ -182,7 +184,7 @@ describe('PatternMatcher', () => {
     it('should handle "collect" of actionWhileCollectStep', async () => {
       const collectSpy = jest.spyOn<any, any>(matcher, 'collectEvent');
       const params = buildParams('UNKNOWN', {
-        actionWhileCollectStep: 'collect',
+        actionWhileCollectStep: CollectAction.COLLECT,
       });
 
       matcher.extendAction(params);
@@ -213,7 +215,7 @@ describe('PatternMatcher', () => {
     it('should handle "return" of actionAfterCollectStep', async () => {
       const emitSpy = jest.spyOn<any, any>(matcher, 'emitCurrentStep');
       const params = buildParams('UNKNOWN', {
-        actionAfterCollectStep: 'return',
+        actionAfterCollectStep: EmitAction.RETURN,
       });
 
       matcher.extendAction(params);
@@ -228,7 +230,7 @@ describe('PatternMatcher', () => {
     it('should handle "emit" of actionAfterCollectStep', async () => {
       const emitSpy = jest.spyOn<any, any>(matcher, 'emitCurrentStep');
       const params = buildParams('UNKNOWN', {
-        actionAfterCollectStep: 'emit',
+        actionAfterCollectStep: EmitAction.EMIT,
       });
 
       matcher.extendAction(params);
@@ -261,7 +263,9 @@ describe('PatternMatcher', () => {
 
     it('should return action', async () => {
       const matchSpy = spyOn<any>(matcher, 'matchPattern').and.callThrough();
-      const params = buildParams('CLICK', { actionBeforeCollectStep: 'emit' });
+      const params = buildParams('CLICK', {
+        actionBeforeCollectStep: EmitAction.EMIT,
+      });
       matcher.extendAction(params);
       matcher.start();
 
@@ -274,7 +278,7 @@ describe('PatternMatcher', () => {
     it('should return "UNKNOWN" when no action match', async () => {
       const matchSpy = spyOn<any>(matcher, 'matchPattern').and.callThrough();
       const params = buildParams(undefined, {
-        actionBeforeCollectStep: 'emit',
+        actionBeforeCollectStep: EmitAction.EMIT,
       });
       matcher.extendAction(params);
       matcher.start();

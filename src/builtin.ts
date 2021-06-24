@@ -1,9 +1,14 @@
-import { PatternMatcher, PatternMatcherExtendParams } from './matcher';
+import {
+  CollectAction,
+  EmitAction,
+  PatternMatcher,
+  PatternMatcherExtendParams,
+} from './matcher';
 import { EventObserver } from './observers';
 import { Recorder, RecorderOptions } from './recorder';
 import { StepEvent, Step } from './types';
 
-export class SimpleRecorder {
+export class InteractionRecorder {
   private _observer: EventObserver;
   public get observer(): EventObserver {
     return this._observer;
@@ -25,53 +30,9 @@ export class SimpleRecorder {
     this._recorder.extendAction<PatternMatcherExtendParams>({
       observer: this._observer,
       pattern: matchPattern,
-      actionBeforeCollectStep: (
-        { currentEvents, currentTarget },
-        newEvent,
-        target,
-      ) => {
-        const isTargetChanged = currentTarget !== target;
-        /**
-         * according to current implementation a scroll step won't be the first step for any type of event;
-         * a scroll event must be started by a wheel or mouseup event share the same target;
-         */
-        if (newEvent.type === 'SCROLL' && isTargetChanged) {
-          /**
-           * ignore other scroll steps on other element when there is already a scroll event;
-           */
-          return 'return';
-        } else if (
-          newEvent.type === 'WHEEL' &&
-          !isTargetChanged &&
-          currentEvents.length &&
-          currentEvents[0].type === 'WHEEL'
-        ) {
-          /**
-           * ignore extra wheel event share the same target;
-           */
-          return 'return';
-        }
-        // /**
-        if (shouldStartNewOne(currentEvents, newEvent, isTargetChanged)) {
-          return 'emit';
-        }
-      },
-      actionWhileCollectStep: ({ currentEvents }, newEvent) => {
-        if (
-          newEvent.type === 'MOUSEMOVE' &&
-          !isDragStep(currentEvents, newEvent)
-        ) {
-          return 'return';
-        }
-        if (needCollect(newEvent)) {
-          return 'collect';
-        }
-      },
-      actionAfterCollectStep: ({ currentEvents }) => {
-        if (shouldStopCurrentOne(currentEvents)) {
-          return 'emit';
-        }
-      },
+      actionBeforeCollectStep: this.actionBeforeCollectStep,
+      actionWhileCollectStep: this.actionWhileCollectStep,
+      actionAfterCollectStep: this.actionAfterCollectStep,
     });
   }
 
@@ -85,6 +46,58 @@ export class SimpleRecorder {
   public stop(): void {
     this._recorder.stop();
   }
+
+  private actionBeforeCollectStep: PatternMatcherExtendParams['actionBeforeCollectStep'] =
+    ({ currentEvents, currentTarget }, newEvent, target) => {
+      const isTargetChanged = currentTarget !== target;
+      /**
+       * according to current implementation a scroll step won't be the first step for any type of event;
+       * a scroll event must be started by a wheel or mouseup event share the same target;
+       */
+      if (newEvent.type === 'SCROLL' && isTargetChanged) {
+        /**
+         * ignore other scroll steps on other element when there is already a scroll event;
+         */
+        return EmitAction.RETURN;
+      } else if (
+        newEvent.type === 'WHEEL' &&
+        !isTargetChanged &&
+        currentEvents.length &&
+        currentEvents[0].type === 'WHEEL'
+      ) {
+        /**
+         * ignore extra wheel event share the same target;
+         */
+        return EmitAction.RETURN;
+      }
+      // /**
+      if (shouldStartNewOne(currentEvents, newEvent, isTargetChanged)) {
+        return EmitAction.EMIT;
+      }
+      return EmitAction.CONTINUE;
+    };
+
+  private actionWhileCollectStep: PatternMatcherExtendParams['actionWhileCollectStep'] =
+    ({ currentEvents }, newEvent) => {
+      if (
+        newEvent.type === 'MOUSEMOVE' &&
+        !isDragStep(currentEvents, newEvent)
+      ) {
+        return CollectAction.RETURN;
+      }
+      if (needCollect(newEvent)) {
+        return CollectAction.COLLECT;
+      }
+      return CollectAction.CONTINUE;
+    };
+
+  private actionAfterCollectStep: PatternMatcherExtendParams['actionAfterCollectStep'] =
+    ({ currentEvents }) => {
+      if (shouldStopCurrentOne(currentEvents)) {
+        return EmitAction.EMIT;
+      }
+      return EmitAction.CONTINUE;
+    };
 }
 
 const keyboardSet = new Set([
