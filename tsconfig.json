@@ -1,14 +1,23 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
+    "target": "es6",
     "sourceMap": true,
     "module": "ESNext",
     "outDir": "build",
     "strict": true,
-    "lib": ["DOM", "DOM.Iterable", "esnext"],
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "esnext"
+    ],
     "esModuleInterop": true,
-    "typeRoots": ["types"],
-    "types": ["node", "jest"],
+    "typeRoots": [
+      "types"
+    ],
+    "types": [
+      "node",
+      "jest"
+    ],
     "rootDir": "src",
     "declaration": true,
     "moduleResolution": "Node",
@@ -16,6 +25,11 @@
     "preserveConstEnums": true,
     "skipLibCheck": true
   },
-  "include": ["src"],
-  "exclude": ["./build/**/*", "./typings/**/*"]
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "./build/**/*",
+    "./typings/**/*"
+  ]
 }

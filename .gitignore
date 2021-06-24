@@ -37,3 +37,9 @@ typings/
 
 # build output files
 build/*
+
+#test coverage
+__tests__/coverage/*
+
+#vscode setting
+.vscode/*

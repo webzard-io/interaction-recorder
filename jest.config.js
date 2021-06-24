@@ -13,4 +13,5 @@ module.exports = {
   collectCoverageFrom: ['<rootDir>/src/**/*.ts'],
   coverageReporters: ['text-summary', 'lcov'],
   collectCoverage: Boolean(process.env.COVERAGE),
+  coverageDirectory: './__tests__/coverage'
 }
