@@ -1,4 +1,4 @@
-import { Modifiers } from "../types";
+import { Modifiers } from '../types';
 
 export type ResetHandler = () => void;
 export type onOptions = {
