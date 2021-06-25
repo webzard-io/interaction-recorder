@@ -3,10 +3,6 @@
   "version": "0.0.1",
   "description": "record user interactions in the browser",
   "main": "build/index.js",
-  "files": [
-    "build"
-  ],
-  "types": "build/index.d.ts",
   "scripts": {
     "prepare": "husky install",
     "start": "rimraf build &&  rollup -c -w",
