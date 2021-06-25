@@ -20,9 +20,6 @@ coverage
 # Dependency directories
 node_modules/
 
-# TypeScript v1 declaration files
-typings/
-
 # TypeScript cache
 *.tsbuildinfo
 
@@ -43,3 +40,6 @@ __tests__/coverage/*
 
 #vscode setting
 .vscode/*
+
+#mac files
+.DS_Store
