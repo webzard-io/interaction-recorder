@@ -1,4 +1,4 @@
-import { EventEmitter2, Listener } from 'eventemitter2';
+import { Listener } from 'eventemitter2';
 import { IExtendParams, IMatcher } from './matcher';
 import { IObserver } from './observers';
 import { MatcherKey, Step, StepEvent } from './types';
@@ -6,17 +6,20 @@ import { BasicMetaQuerier, IMetaQuerier } from './util/metaquerier';
 
 type StepEventHandler = (step: Step) => void;
 
-export type RecorderOptions = {
-  matcher: IMatcher;
+export type RecorderOptions<TMatcher extends IMatcher = IMatcher> = {
+  matcher: TMatcher;
   onEmit: StepEventHandler;
   metaQuerier?: IMetaQuerier;
 };
 
-export class Recorder {
+export class Recorder<TMatcher extends IMatcher = IMatcher> {
   private observersList: IObserver[] = [];
   private listenerMap: WeakMap<IObserver, Listener> = new WeakMap();
 
-  private matcher: IMatcher;
+  private _matcher: TMatcher;
+  public get matcher(): TMatcher {
+    return this._matcher;
+  }
 
   private onEmit: StepEventHandler;
   private metaQuerier: IMetaQuerier;
@@ -27,12 +30,11 @@ export class Recorder {
     return this._state;
   }
 
-  constructor(options: RecorderOptions) {
+  constructor(options: RecorderOptions<TMatcher>) {
     const { matcher, onEmit, metaQuerier } = options;
-    this.matcher = matcher;
-    this.matcher.emitter = new EventEmitter2();
+    this._matcher = matcher;
     this.onEmit = onEmit;
-    this.matcher.emitter.on(
+    this._matcher.emitter.on(
       MatcherKey.EMIT,
       (
         action: Step['action'] | 'UNKNOWN',
@@ -50,7 +52,7 @@ export class Recorder {
     this.observersList.forEach((obs) => {
       obs.start();
     });
-    this.matcher.start();
+    this._matcher.start();
   }
 
   public suspend(): void {
@@ -58,7 +60,7 @@ export class Recorder {
     this.observersList.forEach((obs) => {
       obs.suspend();
     });
-    this.matcher.suspend();
+    this._matcher.suspend();
   }
 
   public stop(): void {
@@ -66,7 +68,7 @@ export class Recorder {
     this.observersList.forEach((obs) => {
       obs.stop();
     });
-    this.matcher.stop();
+    this._matcher.stop();
   }
 
   public extendAction<params extends IExtendParams>(action: params): IObserver {
@@ -86,7 +88,7 @@ export class Recorder {
     const listener = observer.emitter.on(
       `observer.${observer.name}`,
       (event: StepEvent, target: HTMLElement | null) => {
-        this.matcher.emitter!.emit(MatcherKey.NEW_EVENT, event, target);
+        this._matcher.emitter.emit(MatcherKey.NEW_EVENT, event, target);
       },
       {
         objectify: true,
@@ -95,7 +97,7 @@ export class Recorder {
 
     this.listenerMap.set(observer, listener);
     // extend matcher
-    this.matcher.extendAction(action);
+    this._matcher.extendAction(action);
     return observer;
   }
 
@@ -116,7 +118,7 @@ export class Recorder {
       this.observersList.splice(index, 1);
     }
     // remove matcher action;
-    this.matcher.removeAction(observer);
+    this._matcher.removeAction(observer);
   }
 
   private emitCurrentStep(
