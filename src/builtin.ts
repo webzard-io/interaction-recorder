@@ -14,8 +14,8 @@ export class InteractionRecorder {
     return this._observer;
   }
 
-  private _recorder: Recorder<PatternMatcher>;
-  public get recorder(): Recorder<PatternMatcher> {
+  private _recorder: Recorder;
+  public get recorder(): Recorder {
     return this._recorder;
   }
 

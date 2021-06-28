@@ -3,7 +3,7 @@ import { IObserver } from './observers';
 import { MatcherKey, Step, StepEvent } from './types';
 
 export interface IMatcher {
-  emitter: EventEmitter2;
+  emitter?: EventEmitter2;
   start(): void;
   suspend(): void;
   stop(): void;
@@ -49,7 +49,7 @@ export type PatternMatcherExtendParams = IExtendParams & {
 };
 
 export class PatternMatcher implements IMatcher {
-  public emitter = new EventEmitter2();
+  public emitter?: EventEmitter2;
   public currentTarget: HTMLElement | null = null;
   public currentEvents: StepEvent[] = [];
 
@@ -75,7 +75,7 @@ export class PatternMatcher implements IMatcher {
 
   public start(): void {
     if (this.state === 'inactive') {
-      this.emitter.addListener(
+      this.emitter?.addListener(
         MatcherKey.NEW_EVENT,
         (event: StepEvent, target: HTMLElement | null) => {
           this.handleNewEvent(event, target);
@@ -92,7 +92,7 @@ export class PatternMatcher implements IMatcher {
   }
 
   public stop(): void {
-    this.emitter.removeAllListeners();
+    this.emitter?.removeAllListeners();
     this.actionBeforeCollectStep = new Map();
     this.actionAfterCollectStep = new Map();
     this.actionWhileCollectStep = new Map();
@@ -143,7 +143,7 @@ export class PatternMatcher implements IMatcher {
 
   private emitCurrentStep() {
     const { action } = this.matchPattern();
-    this.emitter.emit(
+    this.emitter?.emit(
       MatcherKey.EMIT,
       action,
       this.currentEvents.splice(0, this.currentEvents.length),
