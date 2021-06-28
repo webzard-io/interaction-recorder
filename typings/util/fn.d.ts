@@ -1,4 +1,4 @@
-import { Modifiers } from "../types";
+import { Modifiers } from '../types';
 export declare type ResetHandler = () => void;
 export declare type onOptions = {
     capture?: boolean;

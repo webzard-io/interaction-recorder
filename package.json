@@ -12,7 +12,7 @@
     "typings": "tsc -d --emitDeclarationOnly --declarationDir typings",
     "prepublish": "npm run build && npm run typings",
     "lint": "prettier --write src/* && eslint src --ext .ts",
-    "test:unit": "jest --testPathPattern=__tests__/units",
+    "test:unit": "jest --testPathPattern=__tests__/units --passWithNoTests",
     "test:web": "jest --testPathPattern=__tests__/web --preset=jest-puppeteer"
   },
   "repository": {
