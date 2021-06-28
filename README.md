@@ -1,6 +1,4 @@
 # event-recorder
-recorder ui events and emit them in a smart  way
--# interaction recorder
 
 This is a project aiming for recording user's interaction to a reproducible data.
 
@@ -32,6 +30,7 @@ It contains three core component:
 observer is for collecting event triggered by user's interaction.
 
 built-in recorder has an observer that observe:
+
 - mouse interaction
 - keyboard interaction
 - text input interaction
@@ -44,25 +43,28 @@ An interaction of user may trigger multiple events, matcher is for composing tho
 built-in recorder has a matcher called `PatterMatcher`, match the pattern of event group and compose it to a single interaction event.
 
 It has three period to process a single event from observer:
-- actionBeforeCollectStep:  
-check if new event will cause the previous event group to be emitted;  
-or the event should be ignored in this period;  
-or the event should not be processed anymore.
-- actionWhileCollectStep:  
-check if the event need to be collected;  
-or the event should be ignored in this period;  
-or the event should not be processed anymore.
-- actionAfterCollectStep:  
-check if the event group need to be emitted after collect event;  
-or the event should be ignored in this period;  
-or the event should not be processed anymore.
 
-and a group of pattern to match to event group:  
+- actionBeforeCollectStep:  
+  check if new event will cause the previous event group to be emitted;  
+  or the event should be ignored in this period;  
+  or the event should not be processed anymore.
+- actionWhileCollectStep:  
+  check if the event need to be collected;  
+  or the event should be ignored in this period;  
+  or the event should not be processed anymore.
+- actionAfterCollectStep:  
+  check if the event group need to be emitted after collect event;  
+  or the event should be ignored in this period;  
+  or the event should not be processed anymore.
+
+and a group of pattern to match to event group:
+
 - CLICK
 - DRAG
 - SCROLL
 - TEXTING
 - UNKNOWN
+
 ### 3.recorder
 
 recorder is the bridge between observer and matcher, it will collect event from observer and send it to matcher. And will get interaction composed by matcher. Also, it handle the communication to outside.  
