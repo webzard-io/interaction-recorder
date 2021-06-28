@@ -1,6 +1,6 @@
 {
   "name": "interaction-recorder",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "record user interactions in the browser",
   "main": "build/index.js",
   "scripts": {
@@ -24,6 +24,14 @@
   "bugs": {
     "url": "https://github.com/webzard-io/interaction-recorder/issues"
   },
+  "typings": "typings/index.d.ts",
+  "files": [
+    "package.json",
+    "README.md",
+    "LICENSE",
+    "build/*",
+    "typings/*"
+  ],
   "homepage": "https://github.com/webzard-io/interaction-recorder#readme",
   "devDependencies": {
     "@rollup/plugin-commonjs": "^19.0.0",
