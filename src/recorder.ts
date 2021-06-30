@@ -1,6 +1,6 @@
 import { EventEmitter2, Listener } from 'eventemitter2';
 import { IExtendParams, IMatcher } from './matcher';
-import { IObserver } from './observers';
+import { AbstractObserver } from './observers';
 import { MatcherKey, Step, StepEvent } from './types';
 import { BasicMetaQuerier, IMetaQuerier } from './util/metaquerier';
 
@@ -13,8 +13,8 @@ export type RecorderOptions = {
 };
 
 export class Recorder {
-  private observersList: IObserver[] = [];
-  private listenerMap: WeakMap<IObserver, Listener> = new WeakMap();
+  private observersList: AbstractObserver[] = [];
+  private listenerMap: WeakMap<AbstractObserver, Listener> = new WeakMap();
 
   private matcher: IMatcher;
 
@@ -69,7 +69,9 @@ export class Recorder {
     this.matcher.stop();
   }
 
-  public extendAction<params extends IExtendParams>(action: params): IObserver {
+  public extendAction<params extends IExtendParams>(
+    action: params,
+  ): AbstractObserver {
     const { observer } = action;
     if (this._state === 'active') {
       console.warn(
@@ -99,7 +101,7 @@ export class Recorder {
     return observer;
   }
 
-  public removeAction(observer: IObserver): void {
+  public removeAction(observer: AbstractObserver): void {
     if (this._state === 'active') {
       console.warn(
         'cannot extend recorder when active, please suspend or stop recorder first',

@@ -23,7 +23,7 @@ function isContentEditable(el: HTMLElement) {
   return el.contentEditable === 'true';
 }
 
-export interface IObserver {
+interface IObserver {
   name: string;
   emitter: EventEmitter2;
   start(): void;
@@ -31,29 +31,51 @@ export interface IObserver {
   suspend(): void;
 }
 
-export class EventObserver implements IObserver {
+export abstract class AbstractObserver implements IObserver {
+  abstract name: string;
+  abstract emitter: EventEmitter2;
+
+  abstract start(): void;
+  abstract stop(): void;
+  abstract suspend(): void;
+
+  private static throttleManager = new ThrottleManager();
+  protected getThrottle: typeof ThrottleManager.prototype.getThrottle;
+  protected invokeAll: typeof ThrottleManager.prototype.invokeAll;
+
+  constructor() {
+    this.getThrottle = (...args) => {
+      return AbstractObserver.throttleManager.getThrottle(...args);
+    };
+
+    this.invokeAll = () => {
+      return AbstractObserver.throttleManager.invokeAll();
+    };
+  }
+
+  protected onEmit(
+    event: StepEvent,
+    target: HTMLElement | null,
+    fromThrottler = false,
+  ) {
+    !fromThrottler && AbstractObserver.throttleManager.invokeAll();
+    this.emitter.emit(`observer.${this.name}`, event, target);
+  }
+}
+
+export class EventObserver extends AbstractObserver {
   public name = 'Event';
   public emitter = new EventEmitter2();
 
   private win: Window;
 
-  private onEmit: (
-    event: StepEvent,
-    target: HTMLElement | null,
-    fromThrottler?: boolean,
-  ) => void;
   private handlers: ResetHandler[] = [];
 
   private state: 'active' | 'inactive' | 'suspend' = 'inactive';
 
-  private throttleManager = new ThrottleManager();
-
   constructor(win: Window) {
+    super();
     this.win = win;
-    this.onEmit = (event, target, fromThrottler = false) => {
-      !fromThrottler && this.throttleManager.invokeAll();
-      this.emitter.emit(`observer.${this.name}`, event, target);
-    };
   }
 
   public start(): void {
@@ -128,7 +150,7 @@ export class EventObserver implements IObserver {
     let positions: MousemoveRecord[] = [];
     let timeBaseline: number | null = null;
 
-    const wrappedCb = this.throttleManager.getThrottle(
+    const wrappedCb = this.getThrottle(
       mousemoveSymbol,
       () => {
         if (!this.active) {
@@ -150,7 +172,7 @@ export class EventObserver implements IObserver {
       500,
     );
 
-    const updatePosition = this.throttleManager.getThrottle<MouseEvent>(
+    const updatePosition = this.getThrottle<MouseEvent>(
       updatePosSymbol,
       (evt) => {
         if (!this.active) {
@@ -178,7 +200,7 @@ export class EventObserver implements IObserver {
 
   private observeScroll() {
     const symbolList = new Map<EventTarget | null, symbol>();
-    const updatePosition = this.throttleManager.getThrottle<UIEvent>(
+    const updatePosition = this.getThrottle<UIEvent>(
       (e: UIEvent) => {
         if (!symbolList.has(e.target)) {
           symbolList.set(e.target, Symbol());
@@ -348,7 +370,7 @@ export class EventObserver implements IObserver {
 
   private observeWheel() {
     const wheelSymbol = Symbol('wheel');
-    const handler = this.throttleManager.getThrottle(
+    const handler = this.getThrottle(
       wheelSymbol,
       (evt: WheelEvent) => {
         if (!this.active) {

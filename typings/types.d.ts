@@ -5,7 +5,7 @@ export declare enum MatcherKey {
 }
 export declare type Step = {
     selector: IMeta;
-    action: 'CLICK' | 'DRAG' | 'SCROLL' | 'TEXT';
+    action: 'CLICK' | 'DRAG' | 'SCROLL' | 'TEXT' | string;
     events: StepEvent[];
 };
 export declare type StepEvent = MousedownEvent | MouseupEvent | ClickEvent | MousemoveEvent | ScrollEvent | KeydownEvent | KeypressEvent | TextInputEvent | TextChangeEvent | KeyupEvent | BlurEvent | BeforeUnloadEvent | HoverEvent | WheelEvent;

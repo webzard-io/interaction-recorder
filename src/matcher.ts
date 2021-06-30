@@ -1,5 +1,5 @@
 import { EventEmitter2 } from 'eventemitter2';
-import { IObserver } from './observers';
+import { AbstractObserver } from './observers';
 import { MatcherKey, Step, StepEvent } from './types';
 
 export interface IMatcher {
@@ -8,13 +8,13 @@ export interface IMatcher {
   suspend(): void;
   stop(): void;
   extendAction(action: IExtendParams): void;
-  removeAction(observer: IObserver): void;
+  removeAction(observer: AbstractObserver): void;
 }
 
 export type PatternInterceptor = (matcher: IMatcher) => boolean;
 
 export interface IExtendParams {
-  observer: IObserver;
+  observer: AbstractObserver;
 }
 
 export enum EmitAction {
@@ -54,20 +54,20 @@ export class PatternMatcher implements IMatcher {
   public currentEvents: StepEvent[] = [];
 
   private actionBeforeCollectStep: Map<
-    IObserver,
+    AbstractObserver,
     PatternMatcherExtendParams['actionBeforeCollectStep']
   > = new Map();
   private actionWhileCollectStep: Map<
-    IObserver,
+    AbstractObserver,
     PatternMatcherExtendParams['actionWhileCollectStep']
   > = new Map();
   private actionAfterCollectStep: Map<
-    IObserver,
+    AbstractObserver,
     PatternMatcherExtendParams['actionAfterCollectStep']
   > = new Map();
 
   private patternMatcher: Map<
-    IObserver,
+    AbstractObserver,
     PatternMatcherExtendParams['pattern']
   > = new Map();
 
@@ -119,7 +119,7 @@ export class PatternMatcher implements IMatcher {
     pattern && this.patternMatcher.set(observer, pattern);
   }
 
-  public removeAction(observer: IObserver): void {
+  public removeAction(observer: AbstractObserver): void {
     this.actionBeforeCollectStep.delete(observer);
     this.actionWhileCollectStep.delete(observer);
     this.actionAfterCollectStep.delete(observer);

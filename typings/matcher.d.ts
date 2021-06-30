@@ -1,5 +1,5 @@
 import { EventEmitter2 } from 'eventemitter2';
-import { IObserver } from './observers';
+import { AbstractObserver } from './observers';
 import { Step, StepEvent } from './types';
 export interface IMatcher {
     emitter?: EventEmitter2;
@@ -7,11 +7,11 @@ export interface IMatcher {
     suspend(): void;
     stop(): void;
     extendAction(action: IExtendParams): void;
-    removeAction(observer: IObserver): void;
+    removeAction(observer: AbstractObserver): void;
 }
 export declare type PatternInterceptor = (matcher: IMatcher) => boolean;
 export interface IExtendParams {
-    observer: IObserver;
+    observer: AbstractObserver;
 }
 export declare enum EmitAction {
     RETURN = 1,
@@ -24,7 +24,7 @@ export declare enum CollectAction {
     CONTINUE = 3
 }
 export declare type PatternMatcherExtendParams = IExtendParams & {
-    pattern?: (steps: StepEvent[]) => Step['action'] | 'UNKNOWN';
+    pattern?: (steps: StepEvent[]) => Step['action'] | undefined;
     actionBeforeCollectStep?: (matcher: PatternMatcher, newEvent: StepEvent, target: HTMLElement | null) => EmitAction;
     actionWhileCollectStep?: (matcher: PatternMatcher, newEvent: StepEvent, target: HTMLElement | null) => CollectAction;
     actionAfterCollectStep?: (matcher: PatternMatcher, newEvent: StepEvent, target: HTMLElement | null) => EmitAction;
@@ -42,7 +42,7 @@ export declare class PatternMatcher implements IMatcher {
     suspend(): void;
     stop(): void;
     extendAction(action: PatternMatcherExtendParams): void;
-    removeAction(observer: IObserver): void;
+    removeAction(observer: AbstractObserver): void;
     private matchPattern;
     private emitCurrentStep;
     private handleNewEvent;
