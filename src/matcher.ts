@@ -30,7 +30,7 @@ export enum CollectAction {
 }
 
 export type PatternMatcherExtendParams = IExtendParams & {
-  pattern?: (steps: StepEvent[]) => Step['action'] | 'UNKNOWN';
+  pattern?: (steps: StepEvent[]) => Step['action'] | undefined;
   actionBeforeCollectStep?: (
     matcher: PatternMatcher,
     newEvent: StepEvent,

@@ -7,7 +7,7 @@ export enum MatcherKey {
 
 export type Step = {
   selector: IMeta;
-  action: 'CLICK' | 'DRAG' | 'SCROLL' | 'TEXT';
+  action: 'CLICK' | 'DRAG' | 'SCROLL' | 'TEXT' | string;
   events: StepEvent[];
 };
 
