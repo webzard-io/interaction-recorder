@@ -108,7 +108,7 @@ const keyboardSet = new Set([
   'TEXT_CHANGE',
 ]);
 
-function matchPattern(events: StepEvent[]): Step['action'] | 'UNKNOWN' {
+function matchPattern(events: StepEvent[]): Step['action'] | undefined {
   const len = events.length;
   if (!len) {
     throw new Error('No events found');
@@ -166,7 +166,7 @@ function matchPattern(events: StepEvent[]): Step['action'] | 'UNKNOWN' {
     return 'TEXT';
   }
 
-  return 'UNKNOWN';
+  return undefined;
 }
 
 function shouldStartNewOne(
