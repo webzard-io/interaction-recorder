@@ -1,4 +1,4 @@
-import { IExtendParams, IMatcher } from './matcher';
+import { IExtendParams, IMatcher } from './matcher/matcher';
 import { AbstractObserver } from './observers';
 import { Step } from './types';
 import { IMetaQuerier } from './util/metaquerier';

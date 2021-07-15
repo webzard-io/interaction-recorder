@@ -1,7 +1,8 @@
 import { StepEvent, MousemoveRecord } from './types';
 import { ThrottleManager } from './util/throttler';
 import { EventEmitter2 } from 'eventemitter2';
-import { on, ResetHandler, toModifiers } from './util/fn';
+import { isInputLikeElement, on, ResetHandler, toModifiers } from './util/fn';
+import { getSerializedDataTransferItemList } from './util/entry-reader';
 
 function isFileInput(el: HTMLElement): el is HTMLInputElement {
   return el.tagName === 'INPUT' && (el as HTMLInputElement).type === 'file';
@@ -40,11 +41,11 @@ export abstract class AbstractObserver implements IObserver {
   abstract suspend(): void;
 
   private static throttleManager = new ThrottleManager();
-  protected getThrottle: typeof ThrottleManager.prototype.getThrottle;
+  protected getThrottler: typeof ThrottleManager.prototype.getThrottle;
   protected invokeAll: typeof ThrottleManager.prototype.invokeAll;
 
   constructor() {
-    this.getThrottle = (...args) => {
+    this.getThrottler = (...args) => {
       return AbstractObserver.throttleManager.getThrottle(...args);
     };
 
@@ -73,6 +74,9 @@ export class EventObserver extends AbstractObserver {
 
   private state: 'active' | 'inactive' | 'suspend' = 'inactive';
 
+  private recordingMousemove = false;
+  private previousDragOverTarget: EventTarget | null = null;
+
   constructor(win: Window) {
     super();
     this.win = win;
@@ -88,6 +92,8 @@ export class EventObserver extends AbstractObserver {
       this.observeBlur();
       this.observeBeforeUnload();
       this.observeWheel();
+      this.observerDrag();
+      this.observeFileInput();
     }
     this.state = 'active';
   }
@@ -107,8 +113,10 @@ export class EventObserver extends AbstractObserver {
   }
 
   private observeMouseInteractions() {
-    const getHandler = (type: 'MOUSEDOWN' | 'MOUSEUP' | 'CLICK') => {
-      return (evt: Event) => {
+    const getHandler = (
+      type: 'mousedown' | 'mouseup' | 'click' | 'dblclick' | 'auxclick',
+    ) => {
+      return (evt: MouseEvent) => {
         if (!this.active) {
           return;
         }
@@ -123,15 +131,25 @@ export class EventObserver extends AbstractObserver {
          * indicates the number of click. A click event with the
          * detail of 0 must be triggered by the system.
          */
-        if (type === 'CLICK' && (evt as UIEvent).detail < 1) {
+        if (type === 'click' && (evt as UIEvent).detail < 1) {
           return;
         }
-        const { clientX, clientY } = evt as MouseEvent;
+        if (type === 'mousedown') {
+          this.recordingMousemove = true;
+        } else if (type === 'mouseup') {
+          this.recordingMousemove = false;
+        }
+        const { clientX, clientY, button, buttons, screenX, screenY } =
+          evt as MouseEvent;
         this.onEmit(
           {
             type,
+            screenX,
+            screenY,
             clientX,
             clientY,
+            button,
+            buttons,
             modifiers: toModifiers(evt as MouseEvent),
             timestamp: this.now,
           },
@@ -139,9 +157,11 @@ export class EventObserver extends AbstractObserver {
         );
       };
     };
-    this.handlers.push(on('mousedown', getHandler('MOUSEDOWN'), this.win));
-    this.handlers.push(on('mouseup', getHandler('MOUSEUP'), this.win));
-    this.handlers.push(on('click', getHandler('CLICK'), this.win));
+    this.handlers.push(on('mousedown', getHandler('mousedown'), this.win));
+    this.handlers.push(on('mouseup', getHandler('mouseup'), this.win));
+    this.handlers.push(on('click', getHandler('click'), this.win));
+    this.handlers.push(on('auxclick', getHandler('auxclick'), this.win));
+    this.handlers.push(on('dblclick', getHandler('dblclick'), this.win));
   }
 
   private observeMousemove() {
@@ -150,7 +170,7 @@ export class EventObserver extends AbstractObserver {
     let positions: MousemoveRecord[] = [];
     let timeBaseline: number | null = null;
 
-    const wrappedCb = this.getThrottle(
+    const wrappedCb = this.getThrottler(
       mousemoveSymbol,
       () => {
         if (!this.active) {
@@ -158,7 +178,7 @@ export class EventObserver extends AbstractObserver {
         }
         this.onEmit(
           {
-            type: 'MOUSEMOVE',
+            type: 'mousemove',
             positions,
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             timestamp: timeBaseline!,
@@ -172,19 +192,18 @@ export class EventObserver extends AbstractObserver {
       500,
     );
 
-    const updatePosition = this.getThrottle<MouseEvent>(
+    const throttledPositionFn = this.getThrottler<MouseEvent>(
       updatePosSymbol,
       (evt) => {
-        if (!this.active) {
-          return;
-        }
-        const { clientX, clientY } = evt;
+        const { clientX, clientY, screenX, screenY } = evt;
         if (!timeBaseline) {
           timeBaseline = this.now;
         }
         positions.push({
           clientX,
           clientY,
+          screenX,
+          screenY,
           timeOffset: this.now - timeBaseline,
         });
         wrappedCb();
@@ -195,12 +214,19 @@ export class EventObserver extends AbstractObserver {
       },
     );
 
+    const updatePosition = (evt: Event) => {
+      if (!this.active || !this.recordingMousemove) {
+        return;
+      }
+      throttledPositionFn(evt);
+    };
+
     this.handlers.push(on('mousemove', updatePosition, this.win));
   }
 
   private observeScroll() {
     const symbolList = new Map<EventTarget | null, symbol>();
-    const updatePosition = this.getThrottle<UIEvent>(
+    const updatePosition = this.getThrottler<UIEvent>(
       (e: UIEvent) => {
         if (!symbolList.has(e.target)) {
           symbolList.set(e.target, Symbol());
@@ -225,7 +251,7 @@ export class EventObserver extends AbstractObserver {
             this.win.document.documentElement;
           this.onEmit(
             {
-              type: 'SCROLL',
+              type: 'scroll',
               scrollLeft: scrollEl.scrollLeft,
               scrollTop: scrollEl.scrollTop,
               timestamp: this.now,
@@ -237,7 +263,7 @@ export class EventObserver extends AbstractObserver {
           const target = evt.target as HTMLElement;
           this.onEmit(
             {
-              type: 'SCROLL',
+              type: 'scroll',
               scrollLeft: target.scrollLeft,
               scrollTop: target.scrollTop,
               timestamp: this.now,
@@ -253,7 +279,7 @@ export class EventObserver extends AbstractObserver {
   }
 
   private observeKeyboardInteractions() {
-    const getHandler = (type: 'KEYDOWN' | 'KEYPRESS' | 'KEYUP') => {
+    const getHandler = (type: 'keydown' | 'keypress' | 'keyup') => {
       return (evt: Event) => {
         if (!this.active) {
           return;
@@ -272,9 +298,9 @@ export class EventObserver extends AbstractObserver {
         );
       };
     };
-    this.handlers.push(on('keydown', getHandler('KEYDOWN'), this.win));
-    this.handlers.push(on('keypress', getHandler('KEYPRESS'), this.win));
-    this.handlers.push(on('keyup', getHandler('KEYUP'), this.win));
+    this.handlers.push(on('keydown', getHandler('keydown'), this.win));
+    this.handlers.push(on('keypress', getHandler('keypress'), this.win));
+    this.handlers.push(on('keyup', getHandler('keyup'), this.win));
   }
 
   private observeTextInput() {
@@ -286,7 +312,7 @@ export class EventObserver extends AbstractObserver {
       if (data !== null && data !== undefined && evt.target) {
         this.onEmit(
           {
-            type: 'TEXT_INPUT',
+            type: 'text_input',
             data,
             /**
              * text input event will not record input value any more
@@ -307,13 +333,13 @@ export class EventObserver extends AbstractObserver {
       if (!target) {
         return;
       }
-      if (['checkbox', 'radio'].includes((target as HTMLInputElement).type)) {
+      if (!isInputLikeElement(target)) {
         return;
       }
       if (isTextInputElement(target)) {
         return this.onEmit(
           {
-            type: 'TEXT_CHANGE',
+            type: 'text_change',
             value: target.value,
             timestamp: this.now,
           },
@@ -323,7 +349,7 @@ export class EventObserver extends AbstractObserver {
       if (isContentEditable(target)) {
         return this.onEmit(
           {
-            type: 'TEXT_CHANGE',
+            type: 'text_change',
             value: target.innerHTML,
             timestamp: this.now,
           },
@@ -336,16 +362,16 @@ export class EventObserver extends AbstractObserver {
   }
 
   private observeBlur() {
-    const handler = () => {
+    const handler = (event: Event) => {
       if (!this.active) {
         return;
       }
       this.onEmit(
         {
-          type: 'BLUR',
+          type: 'blur',
           timestamp: this.now,
         },
-        null,
+        event.target as HTMLElement,
       );
     };
 
@@ -359,7 +385,7 @@ export class EventObserver extends AbstractObserver {
       }
       this.onEmit(
         {
-          type: 'BEFORE_UNLOAD',
+          type: 'before_unload',
           timestamp: this.now,
         },
         null,
@@ -370,7 +396,7 @@ export class EventObserver extends AbstractObserver {
 
   private observeWheel() {
     const wheelSymbol = Symbol('wheel');
-    const handler = this.getThrottle(
+    const handler = this.getThrottler(
       wheelSymbol,
       (evt: WheelEvent) => {
         if (!this.active) {
@@ -394,7 +420,7 @@ export class EventObserver extends AbstractObserver {
         if (target) {
           this.onEmit(
             {
-              type: 'WHEEL',
+              type: 'wheel',
               timestamp: this.now,
             },
             target,
@@ -405,6 +431,216 @@ export class EventObserver extends AbstractObserver {
       500,
     );
     this.handlers.push(on('wheel', handler, this.win));
+  }
+
+  private observerDrag() {
+    const dragSymbol = Symbol('drag');
+    const dragStartHandler = async (event: DragEvent) => {
+      if (!this.active) {
+        return;
+      }
+      // reset previous dragover target on start;
+      this.previousDragOverTarget = null;
+      const {
+        clientX,
+        clientY,
+        screenX,
+        screenY,
+        button,
+        buttons,
+        dataTransfer,
+      } = event;
+      this.onEmit(
+        {
+          type: 'dragstart',
+          timestamp: this.now,
+          clientX,
+          clientY,
+          screenX,
+          screenY,
+          button,
+          buttons,
+          modifiers: toModifiers(event),
+          targetIndex: 0,
+          effectAllowed: dataTransfer?.effectAllowed || 'uninitialized',
+          items: await getSerializedDataTransferItemList(event.dataTransfer),
+        },
+        event.target as HTMLElement,
+      );
+    };
+    // drag will trigger multiple times
+    const dragHandler = this.getThrottler<DragEvent>(
+      dragSymbol,
+      (event: DragEvent) => {
+        if (!this.active) {
+          return;
+        }
+        const { clientX, clientY, screenX, screenY, button, buttons } = event;
+        this.onEmit(
+          {
+            type: 'drag',
+            timestamp: this.now,
+            clientX,
+            clientY,
+            screenX,
+            screenY,
+            button,
+            buttons,
+            modifiers: toModifiers(event),
+            targetIndex: 0,
+          },
+          null,
+          true,
+        );
+      },
+      500,
+    );
+
+    // only record dragover on different element;
+    const dragOverHandler = (event: DragEvent) => {
+      if (!this.active) {
+        return;
+      }
+      if (event.target !== this.previousDragOverTarget) {
+        const { clientX, clientY, screenX, screenY, button, buttons } = event;
+        this.onEmit(
+          {
+            type: 'dragover',
+            timestamp: this.now,
+            clientX,
+            clientY,
+            screenX,
+            screenY,
+            button,
+            buttons,
+            dropEffect: event.dataTransfer?.dropEffect || 'none',
+            modifiers: toModifiers(event),
+            targetIndex: 0,
+          },
+          null,
+          true,
+        );
+        this.previousDragOverTarget = event.target;
+      }
+    };
+
+    const dragEndHandler = (event: DragEvent) => {
+      if (!this.active) {
+        return;
+      }
+      const { clientX, clientY, screenX, screenY, button, buttons } = event;
+      this.onEmit(
+        {
+          type: 'dragend',
+          timestamp: this.now,
+          clientX,
+          clientY,
+          screenX,
+          screenY,
+          button,
+          buttons,
+          modifiers: toModifiers(event),
+          targetIndex: 0,
+        },
+        event.target as HTMLElement,
+      );
+      // reset previous dragover target when drag is ended;
+      this.previousDragOverTarget = null;
+    };
+
+    const dropHandler = async (event: DragEvent) => {
+      if (!this.active) {
+        return;
+      }
+      const {
+        clientX,
+        clientY,
+        screenX,
+        screenY,
+        button,
+        buttons,
+        dataTransfer,
+      } = event;
+      this.onEmit(
+        {
+          type: 'drop',
+          timestamp: this.now,
+          clientX,
+          clientY,
+          screenX,
+          screenY,
+          button,
+          buttons,
+          modifiers: toModifiers(event),
+          targetIndex: 0,
+          dropEffect: dataTransfer?.dropEffect || 'none',
+          effectAllowed: dataTransfer?.effectAllowed || 'uninitialized',
+          items: await getSerializedDataTransferItemList(dataTransfer),
+        },
+        event.target as HTMLElement,
+      );
+    };
+
+    const getHandler = (type: 'dragenter' | 'dragleave') => {
+      return (event: DragEvent) => {
+        if (!this.active) {
+          return;
+        }
+        const { clientX, clientY, screenX, screenY, button, buttons } = event;
+        this.onEmit(
+          {
+            type: type,
+            timestamp: this.now,
+            clientX,
+            clientY,
+            screenX,
+            screenY,
+            button,
+            buttons,
+            modifiers: toModifiers(event),
+            targetIndex: 0,
+          },
+          null,
+          true,
+        );
+      };
+    };
+
+    // to get the correct datatransfer object, get it from bubbles phase.
+    this.handlers.push(
+      on('dragstart', dragStartHandler, this.win, {
+        passive: true,
+        capture: false,
+      }),
+    );
+    this.handlers.push(on('drag', dragHandler, this.win));
+    this.handlers.push(on('dragover', dragOverHandler, this.win));
+    this.handlers.push(on('dragenter', getHandler('dragenter'), this.win));
+    this.handlers.push(on('dragleave', getHandler('dragleave'), this.win));
+    this.handlers.push(on('drop', dropHandler, this.win));
+    this.handlers.push(on('dragend', dragEndHandler, this.win));
+  }
+
+  private observeFileInput() {
+    const handler = (event: Event) => {
+      if (!this.active || !event.target) {
+        return;
+      }
+      const target = event.target as HTMLInputElement;
+      if (!isFileInput(target)) {
+        return;
+      }
+      this.onEmit(
+        {
+          type: 'file',
+          files: target.files ? [...target.files] : [],
+          timestamp: this.now,
+        },
+        target,
+      );
+    };
+
+    this.handlers.push(on('change', handler, this.win));
   }
 
   private get now() {

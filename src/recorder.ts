@@ -1,5 +1,5 @@
 import { EventEmitter2, Listener } from 'eventemitter2';
-import { IExtendParams, IMatcher } from './matcher';
+import { IExtendParams, IMatcher } from './matcher/matcher';
 import { AbstractObserver } from './observers';
 import { MatcherKey, Step, StepEvent } from './types';
 import { BasicMetaQuerier, IMetaQuerier } from './util/metaquerier';
@@ -35,7 +35,7 @@ export class Recorder {
     this.matcher.emitter.on(
       MatcherKey.EMIT,
       (
-        action: Step['action'] | 'UNKNOWN',
+        action: Step['type'] | 'UNKNOWN',
         events: StepEvent[],
         target: HTMLElement | null,
       ) => {
@@ -96,8 +96,6 @@ export class Recorder {
     ) as Listener;
 
     this.listenerMap.set(observer, listener);
-    // extend matcher
-    this.matcher.extendAction(action);
     return observer;
   }
 
@@ -117,12 +115,10 @@ export class Recorder {
     if (index !== -1) {
       this.observersList.splice(index, 1);
     }
-    // remove matcher action;
-    this.matcher.removeAction(observer);
   }
 
   private emitCurrentStep(
-    action: Step['action'] | 'UNKNOWN',
+    action: Step['type'] | 'UNKNOWN',
     events: StepEvent[],
     target: HTMLElement | null,
   ) {
@@ -134,7 +130,7 @@ export class Recorder {
     } else {
       this.onEmit({
         selector: this.metaQuerier.getMeta(target),
-        action,
+        type: action,
         events,
       });
     }

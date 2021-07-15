@@ -15,7 +15,7 @@ export declare abstract class AbstractObserver implements IObserver {
     abstract stop(): void;
     abstract suspend(): void;
     private static throttleManager;
-    protected getThrottle: typeof ThrottleManager.prototype.getThrottle;
+    protected getThrottler: typeof ThrottleManager.prototype.getThrottle;
     protected invokeAll: typeof ThrottleManager.prototype.invokeAll;
     constructor();
     protected onEmit(event: StepEvent, target: HTMLElement | null, fromThrottler?: boolean): void;
@@ -26,6 +26,8 @@ export declare class EventObserver extends AbstractObserver {
     private win;
     private handlers;
     private state;
+    private recordingMousemove;
+    private previousDragOverTarget;
     constructor(win: Window);
     start(): void;
     suspend(): void;
@@ -38,6 +40,8 @@ export declare class EventObserver extends AbstractObserver {
     private observeBlur;
     private observeBeforeUnload;
     private observeWheel;
+    private observerDrag;
+    private observeFileInput;
     private get now();
     private get active();
 }

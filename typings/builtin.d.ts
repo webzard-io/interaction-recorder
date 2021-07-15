@@ -9,7 +9,4 @@ export declare class InteractionRecorder {
     start(): void;
     suspend(): void;
     stop(): void;
-    private actionBeforeCollectStep;
-    private actionWhileCollectStep;
-    private actionAfterCollectStep;
 }

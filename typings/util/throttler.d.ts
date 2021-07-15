@@ -9,6 +9,7 @@ export interface IThrottler {
 }
 export declare class ThrottleManager {
     private throttlerMap;
-    getThrottle<T>(throttleDivider: ((...args: any[]) => symbol) | symbol, func: (arg: T) => void, wait: number, options?: throttleOptions): (this: any, ...args: any) => void;
+    private pendingFnSet;
+    getThrottle<T>(throttleDivider: ((arg: T) => symbol) | symbol, func: (arg: T) => void, wait: number, options?: throttleOptions): (this: any, ...args: any) => void;
     invokeAll(): void;
 }

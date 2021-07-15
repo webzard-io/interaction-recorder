@@ -16,7 +16,8 @@
     ],
     "types": [
       "node",
-      "jest"
+      "jest",
+      "wicg-entries-api"
     ],
     "rootDir": "src",
     "declaration": true,

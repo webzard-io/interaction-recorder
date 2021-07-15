@@ -11,9 +11,10 @@ export interface IThrottler {
 
 export class ThrottleManager {
   private throttlerMap = new Map<symbol, IThrottler>();
+  private pendingFnSet = new Set();
 
   public getThrottle<T>(
-    throttleDivider: ((...args: any[]) => symbol) | symbol,
+    throttleDivider: ((arg: T) => symbol) | symbol,
     func: (arg: T) => void,
     wait: number,
     options: throttleOptions = {},
@@ -49,6 +50,7 @@ export class ThrottleManager {
         }
         throttler.previous = now;
         func.apply(this, args);
+        manager.pendingFnSet.delete(throttler.invoker);
         throttler.invoker = null;
       } else if (!throttler.timeout && options.trailing !== false) {
         const debouncedFn = () => {
@@ -56,18 +58,22 @@ export class ThrottleManager {
           throttler.timeout && clearTimeout(throttler.timeout);
           throttler.timeout = null;
           func.apply(this, args);
+          manager.pendingFnSet.delete(throttler.invoker);
           throttler.invoker = null;
         };
         throttler.timeout = window.setTimeout(debouncedFn, remaining);
         throttler.invoker = debouncedFn;
+        manager.pendingFnSet.add(throttler.invoker);
       }
     };
     return throttleFn;
   }
 
   public invokeAll(): void {
-    this.throttlerMap.forEach((throttler) => {
-      throttler.invoker && throttler.invoker();
-    });
+    while (this.pendingFnSet.size) {
+      this.throttlerMap.forEach((throttler) => {
+        throttler.invoker && throttler.invoker();
+      });
+    }
   }
 }
