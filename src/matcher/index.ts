@@ -1,5 +1,4 @@
 import { EventEmitter2 } from 'eventemitter2';
-import { AbstractObserver } from '../observers';
 import { MatcherKey, Step, StepEvent } from '../types';
 import { MatcherMachine } from './machine';
 
@@ -8,22 +7,6 @@ export interface IMatcher {
   start(): void;
   suspend(): void;
   stop(): void;
-}
-
-export type PatternInterceptor = (matcher: IMatcher) => boolean;
-
-export interface IExtendParams {
-  observer: AbstractObserver;
-}
-
-export type PatternMatcherExtendParams = IExtendParams & {
-  pattern?: (steps: StepEvent[]) => Step['type'] | undefined;
-};
-
-export enum HandleResult {
-  IGNORE = 0,
-  MERGE = 1,
-  NEW = 2,
 }
 
 export type MatcherStep = Omit<Step, 'selector'> & {
