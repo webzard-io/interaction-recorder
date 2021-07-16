@@ -1,6 +1,6 @@
 import { EventEmitter2, Listener } from 'eventemitter2';
-import { IExtendParams, IMatcher } from './matcher';
-import { IObserver } from './observers';
+import { IMatcher } from './matcher';
+import { AbstractObserver, IObserver } from './observers';
 import { MatcherKey, Step, StepEvent } from './types';
 import { BasicMetaQuerier, IMetaQuerier } from './util/metaquerier';
 
@@ -32,16 +32,7 @@ export class Recorder {
     this.matcher = matcher;
     this.matcher.emitter = new EventEmitter2();
     this.onEmit = onEmit;
-    this.matcher.emitter.on(
-      MatcherKey.EMIT,
-      (
-        action: Step['action'] | 'UNKNOWN',
-        events: StepEvent[],
-        target: HTMLElement | null,
-      ) => {
-        this.emitCurrentStep(action, events, target);
-      },
-    );
+    this.matcher.emitter.on(MatcherKey.EMIT, this.emitStep.bind(this));
     this.metaQuerier = metaQuerier || new BasicMetaQuerier();
   }
 
@@ -69,8 +60,7 @@ export class Recorder {
     this.matcher.stop();
   }
 
-  public extendAction<params extends IExtendParams>(action: params): IObserver {
-    const { observer } = action;
+  public extendObserver(observer: AbstractObserver): AbstractObserver {
     if (this._state === 'active') {
       console.warn(
         'cannot extend recorder when active, please suspend or stop recorder first',
@@ -94,12 +84,10 @@ export class Recorder {
     ) as Listener;
 
     this.listenerMap.set(observer, listener);
-    // extend matcher
-    this.matcher.extendAction(action);
     return observer;
   }
 
-  public removeAction(observer: IObserver): void {
+  public removeObserver(observer: AbstractObserver): void {
     if (this._state === 'active') {
       console.warn(
         'cannot extend recorder when active, please suspend or stop recorder first',
@@ -115,24 +103,22 @@ export class Recorder {
     if (index !== -1) {
       this.observersList.splice(index, 1);
     }
-    // remove matcher action;
-    this.matcher.removeAction(observer);
   }
 
-  private emitCurrentStep(
-    action: Step['action'] | 'UNKNOWN',
+  private emitStep(
+    type: Step['type'],
     events: StepEvent[],
     target: HTMLElement | null,
   ) {
     if (!target) {
       throw new Error('current target is missing');
     }
-    if (action === 'UNKNOWN') {
+    if (type === 'UNKNOWN') {
       console.error(`Unknown events: ${JSON.stringify(events)}`);
     } else {
       this.onEmit({
         selector: this.metaQuerier.getMeta(target),
-        action,
+        type,
         events,
       });
     }

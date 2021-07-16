@@ -1,5 +1,5 @@
-import { IExtendParams, IMatcher } from './matcher';
-import { IObserver } from './observers';
+import { IMatcher } from './matcher';
+import { AbstractObserver } from './observers';
 import { Step } from './types';
 import { IMetaQuerier } from './util/metaquerier';
 declare type StepEventHandler = (step: Step) => void;
@@ -20,8 +20,8 @@ export declare class Recorder {
     start(): void;
     suspend(): void;
     stop(): void;
-    extendAction<params extends IExtendParams>(action: params): IObserver;
-    removeAction(observer: IObserver): void;
-    private emitCurrentStep;
+    extendObserver(observer: AbstractObserver): AbstractObserver;
+    removeObserver(observer: AbstractObserver): void;
+    private emitStep;
 }
 export {};
