@@ -31,29 +31,51 @@ export interface IObserver {
   suspend(): void;
 }
 
-export class EventObserver implements IObserver {
+export abstract class AbstractObserver implements IObserver {
+  abstract name: string;
+  abstract emitter: EventEmitter2;
+
+  abstract start(): void;
+  abstract stop(): void;
+  abstract suspend(): void;
+
+  private static throttleManager = new ThrottleManager();
+  protected getThrottle: typeof ThrottleManager.prototype.getThrottle;
+  protected invokeAll: typeof ThrottleManager.prototype.invokeAll;
+
+  constructor() {
+    this.getThrottle = (...args) => {
+      return AbstractObserver.throttleManager.getThrottle(...args);
+    };
+
+    this.invokeAll = () => {
+      return AbstractObserver.throttleManager.invokeAll();
+    };
+  }
+
+  protected onEmit(
+    event: StepEvent,
+    target: HTMLElement | null,
+    fromThrottler = false,
+  ) {
+    !fromThrottler && AbstractObserver.throttleManager.invokeAll();
+    this.emitter.emit(`observer.${this.name}`, event, target);
+  }
+}
+
+export class EventObserver extends AbstractObserver {
   public name = 'Event';
   public emitter = new EventEmitter2();
 
   private win: Window;
 
-  private onEmit: (
-    event: StepEvent,
-    target: HTMLElement | null,
-    fromThrottler?: boolean,
-  ) => void;
   private handlers: ResetHandler[] = [];
 
   private state: 'active' | 'inactive' | 'suspend' = 'inactive';
 
-  private throttleManager = new ThrottleManager();
-
   constructor(win: Window) {
+    super();
     this.win = win;
-    this.onEmit = (event, target, fromThrottler = false) => {
-      !fromThrottler && this.throttleManager.invokeAll();
-      this.emitter.emit(`observer.${this.name}`, event, target);
-    };
   }
 
   public start(): void {
@@ -85,8 +107,8 @@ export class EventObserver implements IObserver {
   }
 
   private observeMouseInteractions() {
-    const getHandler = (type: 'MOUSEDOWN' | 'MOUSEUP' | 'CLICK') => {
-      return (evt: Event) => {
+    const getHandler = (type: 'mousedown' | 'mouseup' | 'click') => {
+      return (event: MouseEvent) => {
         if (!this.active) {
           return;
         }
@@ -101,25 +123,29 @@ export class EventObserver implements IObserver {
          * indicates the number of click. A click event with the
          * detail of 0 must be triggered by the system.
          */
-        if (type === 'CLICK' && (evt as UIEvent).detail < 1) {
+        if (type === 'click' && (event as UIEvent).detail < 1) {
           return;
         }
-        const { clientX, clientY } = evt as MouseEvent;
+        const { clientX, clientY, button, buttons, screenX, screenY } = event;
         this.onEmit(
           {
             type,
+            button,
+            buttons,
+            screenX,
+            screenY,
             clientX,
             clientY,
-            modifiers: toModifiers(evt as MouseEvent),
+            modifiers: toModifiers(event),
             timestamp: this.now,
           },
-          evt.target as HTMLElement,
+          event.target as HTMLElement,
         );
       };
     };
-    this.handlers.push(on('mousedown', getHandler('MOUSEDOWN'), this.win));
-    this.handlers.push(on('mouseup', getHandler('MOUSEUP'), this.win));
-    this.handlers.push(on('click', getHandler('CLICK'), this.win));
+    this.handlers.push(on('mousedown', getHandler('mousedown'), this.win));
+    this.handlers.push(on('mouseup', getHandler('mouseup'), this.win));
+    this.handlers.push(on('click', getHandler('click'), this.win));
   }
 
   private observeMousemove() {
@@ -128,7 +154,7 @@ export class EventObserver implements IObserver {
     let positions: MousemoveRecord[] = [];
     let timeBaseline: number | null = null;
 
-    const wrappedCb = this.throttleManager.getThrottle(
+    const wrappedCb = this.getThrottle(
       mousemoveSymbol,
       () => {
         if (!this.active) {
@@ -136,7 +162,7 @@ export class EventObserver implements IObserver {
         }
         this.onEmit(
           {
-            type: 'MOUSEMOVE',
+            type: 'mousemove',
             positions,
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             timestamp: timeBaseline!,
@@ -150,19 +176,21 @@ export class EventObserver implements IObserver {
       500,
     );
 
-    const updatePosition = this.throttleManager.getThrottle<MouseEvent>(
+    const updatePosition = this.getThrottle<MouseEvent>(
       updatePosSymbol,
       (evt) => {
         if (!this.active) {
           return;
         }
-        const { clientX, clientY } = evt;
+        const { clientX, clientY, screenX, screenY } = evt;
         if (!timeBaseline) {
           timeBaseline = this.now;
         }
         positions.push({
           clientX,
           clientY,
+          screenX,
+          screenY,
           timeOffset: this.now - timeBaseline,
         });
         wrappedCb();
@@ -178,7 +206,7 @@ export class EventObserver implements IObserver {
 
   private observeScroll() {
     const symbolList = new Map<EventTarget | null, symbol>();
-    const updatePosition = this.throttleManager.getThrottle<UIEvent>(
+    const updatePosition = this.getThrottle<UIEvent>(
       (e: UIEvent) => {
         if (!symbolList.has(e.target)) {
           symbolList.set(e.target, Symbol());
@@ -203,7 +231,7 @@ export class EventObserver implements IObserver {
             this.win.document.documentElement;
           this.onEmit(
             {
-              type: 'SCROLL',
+              type: 'scroll',
               scrollLeft: scrollEl.scrollLeft,
               scrollTop: scrollEl.scrollTop,
               timestamp: this.now,
@@ -215,7 +243,7 @@ export class EventObserver implements IObserver {
           const target = evt.target as HTMLElement;
           this.onEmit(
             {
-              type: 'SCROLL',
+              type: 'scroll',
               scrollLeft: target.scrollLeft,
               scrollTop: target.scrollTop,
               timestamp: this.now,
@@ -231,7 +259,7 @@ export class EventObserver implements IObserver {
   }
 
   private observeKeyboardInteractions() {
-    const getHandler = (type: 'KEYDOWN' | 'KEYPRESS' | 'KEYUP') => {
+    const getHandler = (type: 'keydown' | 'keypress' | 'keyup') => {
       return (evt: Event) => {
         if (!this.active) {
           return;
@@ -250,9 +278,9 @@ export class EventObserver implements IObserver {
         );
       };
     };
-    this.handlers.push(on('keydown', getHandler('KEYDOWN'), this.win));
-    this.handlers.push(on('keypress', getHandler('KEYPRESS'), this.win));
-    this.handlers.push(on('keyup', getHandler('KEYUP'), this.win));
+    this.handlers.push(on('keydown', getHandler('keydown'), this.win));
+    this.handlers.push(on('keypress', getHandler('keypress'), this.win));
+    this.handlers.push(on('keyup', getHandler('keyup'), this.win));
   }
 
   private observeTextInput() {
@@ -264,7 +292,7 @@ export class EventObserver implements IObserver {
       if (data !== null && data !== undefined && evt.target) {
         this.onEmit(
           {
-            type: 'TEXT_INPUT',
+            type: 'text_input',
             data,
             /**
              * text input event will not record input value any more
@@ -291,7 +319,7 @@ export class EventObserver implements IObserver {
       if (isTextInputElement(target)) {
         return this.onEmit(
           {
-            type: 'TEXT_CHANGE',
+            type: 'text_change',
             value: target.value,
             timestamp: this.now,
           },
@@ -301,7 +329,7 @@ export class EventObserver implements IObserver {
       if (isContentEditable(target)) {
         return this.onEmit(
           {
-            type: 'TEXT_CHANGE',
+            type: 'text_change',
             value: target.innerHTML,
             timestamp: this.now,
           },
@@ -320,7 +348,7 @@ export class EventObserver implements IObserver {
       }
       this.onEmit(
         {
-          type: 'BLUR',
+          type: 'blur',
           timestamp: this.now,
         },
         null,
@@ -337,7 +365,7 @@ export class EventObserver implements IObserver {
       }
       this.onEmit(
         {
-          type: 'BEFORE_UNLOAD',
+          type: 'before_unload',
           timestamp: this.now,
         },
         null,
@@ -348,7 +376,7 @@ export class EventObserver implements IObserver {
 
   private observeWheel() {
     const wheelSymbol = Symbol('wheel');
-    const handler = this.throttleManager.getThrottle(
+    const handler = this.getThrottle(
       wheelSymbol,
       (evt: WheelEvent) => {
         if (!this.active) {
@@ -372,7 +400,7 @@ export class EventObserver implements IObserver {
         if (target) {
           this.onEmit(
             {
-              type: 'WHEEL',
+              type: 'wheel',
               timestamp: this.now,
             },
             target,

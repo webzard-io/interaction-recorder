@@ -43,3 +43,6 @@ __tests__/coverage/*
 
 #mac files
 .DS_Store
+
+#not commit files
+.nocommit/*
