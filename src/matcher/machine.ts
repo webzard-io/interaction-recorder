@@ -12,13 +12,16 @@ import {
   StateValue,
 } from 'xstate';
 import { toSCXMLEvent } from 'xstate/lib/utils';
-import { MatcherStep } from '..';
+import { isInputLikeElement, MatcherStep } from '..';
+import { isSpecialKey } from '../util/special-key-map';
 import {
   MatcherSchema,
   MatcherEvent,
   MatcherState,
   MatcherContext,
 } from './types';
+
+const dblclickMaxGap = 350;
 
 export class MatcherMachine {
   private _machine: StateMachine<
@@ -33,6 +36,8 @@ export class MatcherMachine {
     MatcherEvent,
     MatcherState
   >;
+
+  private emit: (step: MatcherStep) => void;
 
   private getTargetStateNode(
     state: State<MatcherContext, MatcherEvent, MatcherSchema, MatcherState>,
@@ -57,8 +62,6 @@ export class MatcherMachine {
     return this._service;
   }
 
-  private emit: (step: MatcherStep) => void;
-
   constructor(emit: (step: MatcherStep) => void) {
     this.emit = emit;
     this._machine = Machine<MatcherContext, MatcherSchema, MatcherEvent>(
@@ -72,6 +75,11 @@ export class MatcherMachine {
         on: {
           mousedown: [
             {
+              target: 'RIGHT_CLICK',
+              actions: ['emitStep', 'newStep'],
+              cond: (_c, { data: event }) => event.button === 2,
+            },
+            {
               target: 'CLICK',
               actions: ['emitStep', 'newStep'],
             },
@@ -80,6 +88,15 @@ export class MatcherMachine {
             {
               target: 'TEXT',
               actions: ['emitStep', 'newStep'],
+              cond: (_c, { data: event, target }) =>
+                !!target &&
+                isInputLikeElement(target) &&
+                !isSpecialKey(event.key),
+            },
+            {
+              target: 'KEYPRESS',
+              actions: ['emitStep', 'newStep'],
+              cond: (_c, { target }) => !!target,
             },
           ],
           text_input: {
@@ -90,6 +107,11 @@ export class MatcherMachine {
             target: 'TEXT',
             actions: ['emitStep', 'newStep'],
           },
+          drop: {
+            target: 'DROP_FILE',
+            actions: ['emitStep', 'newStep'],
+            cond: (c, event) => !!event.data.items.length,
+          },
           wheel: {
             target: 'SCROLL',
             actions: ['emitStep', 'newStep'],
@@ -97,8 +119,16 @@ export class MatcherMachine {
           blur: {
             actions: 'emitStep',
             cond: ({ currentStep }, { target }) => {
-              return !!currentStep && target === window;
+              return (
+                !!currentStep &&
+                target === window &&
+                currentStep.type !== 'BROWSE_FILE'
+              );
             },
+          },
+          file: {
+            target: 'BROWSE_FILE',
+            actions: ['emitStep', 'newStep'],
           },
           '*': {
             target: 'UNKNOWN',
@@ -112,6 +142,46 @@ export class MatcherMachine {
           CLICK: {
             on: {
               mousedown: [
+                {
+                  target: 'DBLCLICK',
+                  cond: ({ currentStep }, { data: event, target }) => {
+                    if (!currentStep) {
+                      return false;
+                    }
+                    const lastEvent =
+                      currentStep.events[currentStep.events.length - 1];
+                    return (
+                      lastEvent.type === 'click' &&
+                      event.button === lastEvent.button &&
+                      event.timestamp - lastEvent.timestamp <= dblclickMaxGap &&
+                      currentStep.target === target
+                    );
+                  },
+                  actions: 'mergeStep',
+                },
+                {
+                  cond: ({ currentStep }) => {
+                    if (!currentStep) {
+                      return false;
+                    }
+                    return (
+                      currentStep.type === 'CLICK' &&
+                      currentStep.events.filter(
+                        (event) => event.type === 'mousedown',
+                      ).length ===
+                        currentStep.events.filter(
+                          (event) => event.type === 'mouseup',
+                        ).length +
+                          1
+                    );
+                  },
+                  actions: 'mergeStep',
+                },
+                {
+                  target: 'RIGHT_CLICK',
+                  actions: ['emitStep', 'newStep'],
+                  cond: (_c, { data: event }) => event.button === 2,
+                },
                 {
                   actions: ['emitStep', 'newStep'],
                 },
@@ -144,11 +214,47 @@ export class MatcherMachine {
               mouseup: {
                 actions: 'mergeStep',
               },
+              auxclick: {
+                actions: 'mergeStep',
+              },
               click: [
+                {
+                  target: 'BROWSE_FILE',
+                  actions: 'mergeStep',
+                  cond: (_c, { target }) => {
+                    return (
+                      target?.tagName === 'INPUT' &&
+                      (target as HTMLInputElement).type === 'file'
+                    );
+                  },
+                },
                 {
                   actions: 'mergeStep',
                 },
               ],
+            },
+          },
+          RIGHT_CLICK: {
+            on: {
+              mouseup: {
+                actions: 'mergeStep',
+              },
+              auxclick: {
+                actions: 'mergeStep',
+              },
+            },
+          },
+          DBLCLICK: {
+            on: {
+              mouseup: {
+                actions: 'mergeStep',
+              },
+              click: {
+                actions: 'mergeStep',
+              },
+              dblclick: {
+                actions: 'mergeStep',
+              },
             },
           },
           DRAG: {
@@ -162,11 +268,61 @@ export class MatcherMachine {
               click: {
                 actions: 'mergeStep',
               },
+              drag: {
+                actions: 'mergeStep',
+              },
+              dragstart: {
+                actions: 'mergeStep',
+              },
+              dragenter: {
+                actions: 'mergeStep',
+              },
+              dragleave: {
+                actions: 'mergeStep',
+              },
+              dragover: {
+                actions: 'mergeStep',
+              },
+              drop: {
+                actions: 'mergeStep',
+              },
+            },
+          },
+          KEYPRESS: {
+            on: {
+              keydown: [
+                {
+                  actions: 'mergeStep',
+                  cond: ({ currentStep }) =>
+                    !!currentStep &&
+                    currentStep.events.filter(
+                      (event) => event.type === 'keydown',
+                    ) >
+                      currentStep.events.filter(
+                        (event) => event.type === 'keyup',
+                      ),
+                },
+                {
+                  actions: ['emitStep', 'newStep'],
+                },
+              ],
+              keypress: {
+                actions: 'mergeStep',
+              },
+              keyup: {
+                actions: 'mergeStep',
+              },
             },
           },
           TEXT: {
             on: {
               keydown: [
+                {
+                  target: 'KEYPRESS',
+                  actions: ['emitStep', 'newStep'],
+                  cond: ({ currentStep }, { data: event, target }) =>
+                    isSpecialKey(event.key) || currentStep?.target !== target,
+                },
                 {
                   actions: 'mergeStep',
                 },
@@ -199,6 +355,16 @@ export class MatcherMachine {
               ],
             },
           },
+          BROWSE_FILE: {
+            on: {
+              file: {
+                target: 'BROWSE_FILE',
+                actions: 'mergeStep',
+              },
+            },
+          },
+          DROP_FILE: {},
+          NAVIGATION: {},
           SCROLL: {
             on: {
               scroll: {
@@ -206,6 +372,8 @@ export class MatcherMachine {
               },
             },
           },
+          REFRESH: {},
+          RESIZE: {},
           UNKNOWN: {},
         },
       },

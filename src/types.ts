@@ -1,4 +1,5 @@
 ﻿import { IMeta } from './util/metaquerier';
+import { IDataTransferItem } from './util/entry-reader';
 
 export enum MatcherKey {
   NEW_EVENT = 'matcher.newEvent',
@@ -7,7 +8,20 @@ export enum MatcherKey {
 
 export type Step = {
   selector: IMeta;
-  type: 'CLICK' | 'DRAG' | 'TEXT' | 'SCROLL' | 'UNKNOWN';
+  type:
+    | 'CLICK'
+    | 'RIGHT_CLICK'
+    | 'DBLCLICK'
+    | 'DRAG'
+    | 'KEYPRESS'
+    | 'TEXT'
+    | 'BROWSE_FILE'
+    | 'DROP_FILE'
+    | 'NAVIGATION'
+    | 'SCROLL'
+    | 'REFRESH'
+    | 'RESIZE'
+    | 'UNKNOWN';
   events: StepEvent[];
 };
 
@@ -22,7 +36,15 @@ export type StepEvent =
   | BlurEvent
   | MachineBeforeUnloadEvent
   | HoverEvent
-  | MachineWheelEvent;
+  | MachineWheelEvent
+  | DraggingEvent
+  | DropEvent
+  | DragStartEvent
+  | DragEndEvent
+  | DragEnterEvent
+  | DragOverEvent
+  | DragLeaveEvent
+  | BrowseFileEvent;
 
 export type Modifiers = {
   // only record modifers when needed
@@ -67,13 +89,27 @@ export type ClickEvent = MachineMouseEvent & {
   type: 'click';
 };
 
+export type DblClickEvent = MachineMouseEvent & {
+  type: 'dblclick';
+};
+
+export type AuxClickEvent = MachineMouseEvent & {
+  type: 'auxclick';
+};
+
 // mousemove is special
 export type MousemoveEvent = BaseEvent & {
   type: 'mousemove';
   positions: Array<MousemoveRecord>;
 };
 
-type MouseEvents = MousedownEvent | MouseupEvent | ClickEvent | MousemoveEvent;
+type MouseEvents =
+  | MousedownEvent
+  | MouseupEvent
+  | ClickEvent
+  | DblClickEvent
+  | AuxClickEvent
+  | MousemoveEvent;
 //#endregion mouse event
 
 export type ScrollEvent = BaseEvent & {
@@ -132,4 +168,41 @@ export type HoverEvent = BaseEvent & {
 
 export type MachineWheelEvent = BaseEvent & {
   type: 'wheel';
+};
+
+export type BaseDragEvent = MachineMouseEvent & {
+  targetIndex: number;
+};
+
+export type DraggingEvent = BaseDragEvent & {
+  type: 'drag';
+};
+export type DragStartEvent = BaseDragEvent & {
+  type: 'dragstart';
+  effectAllowed: DataTransfer['effectAllowed'];
+  items: Array<IDataTransferItem | undefined>;
+};
+export type DragEndEvent = BaseDragEvent & {
+  type: 'dragend';
+};
+export type DragEnterEvent = BaseDragEvent & {
+  type: 'dragenter';
+};
+export type DragOverEvent = BaseDragEvent & {
+  type: 'dragover';
+  dropEffect: DataTransfer['dropEffect'];
+};
+export type DragLeaveEvent = BaseDragEvent & {
+  type: 'dragleave';
+};
+export type DropEvent = BaseDragEvent & {
+  type: 'drop';
+  effectAllowed: DataTransfer['effectAllowed'];
+  dropEffect: DataTransfer['dropEffect'];
+  items: Array<IDataTransferItem | undefined>;
+};
+
+export type BrowseFileEvent = BaseEvent & {
+  type: 'file';
+  files: Array<File>;
 };
