@@ -12,8 +12,9 @@ import {
   StateValue,
 } from 'xstate';
 import { toSCXMLEvent } from 'xstate/lib/utils';
-import { isInputLikeElement, MatcherStep } from '..';
+import { MatcherStep } from './index';
 import { isSpecialKey } from '../util/special-key-map';
+import { isInputLikeElement } from '../util/fn';
 import {
   MatcherSchema,
   MatcherEvent,
@@ -44,6 +45,11 @@ export class MatcherMachine {
     event: MatcherEvent,
   ): StateValue {
     const _state = this.machine.resolveState(state!);
+    /**
+     * FIXME: the _transition function is a private functon.
+     * I use this function here is due to assign action in entry cannot get correct state node.
+     * when the bug is fixed, make newEvent action not assign type for new step event, and make an entry action to assign the type.
+     */
     const transitions = this.machine['_transition'](
       _state.value,
       _state,

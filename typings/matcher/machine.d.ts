@@ -1,5 +1,5 @@
 import { Interpreter, SingleOrArray, Event as XEvent, SCXML, EventData, StateMachine, State } from 'xstate';
-import { MatcherStep } from '..';
+import { MatcherStep } from './index';
 import { MatcherSchema, MatcherEvent, MatcherState, MatcherContext } from './types';
 export declare class MatcherMachine {
     private _machine;
