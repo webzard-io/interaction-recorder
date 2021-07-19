@@ -1,5 +1,5 @@
 import { StateSchema } from 'xstate';
-import { BlurEvent, ClickEvent, HoverEvent, KeydownEvent, KeypressEvent, KeyupEvent, MachineBeforeUnloadEvent, MachineWheelEvent, MousedownEvent, MousemoveEvent, MouseupEvent, ScrollEvent, TextChangeEvent, TextInputEvent } from '../types';
+import { AuxClickEvent, MachineBeforeUnloadEvent, MachineWheelEvent, BlurEvent, BrowseFileEvent, ClickEvent, DblClickEvent, DragEndEvent, DragEnterEvent, DraggingEvent, DragLeaveEvent, DragOverEvent, DragStartEvent, DropEvent, HoverEvent, KeydownEvent, KeypressEvent, KeyupEvent, MousedownEvent, MousemoveEvent, MouseupEvent, ScrollEvent, TextChangeEvent, TextInputEvent } from '../types';
 import { MatcherStep } from './index';
 export interface MatcherContext {
     currentStep?: MatcherStep;
@@ -9,9 +9,17 @@ export interface MatcherSchema extends StateSchema {
     states: {
         INIT: {};
         CLICK: {};
+        RIGHT_CLICK: {};
+        DBLCLICK: {};
         DRAG: {};
+        KEYPRESS: {};
         TEXT: {};
+        BROWSE_FILE: {};
+        DROP_FILE: {};
+        NAVIGATION: {};
         SCROLL: {};
+        REFRESH: {};
+        RESIZE: {};
         UNKNOWN: {};
     };
 }
@@ -26,6 +34,14 @@ export declare type MatcherEvent = {
 } | {
     type: 'click';
     data: ClickEvent;
+    target: HTMLElement | null;
+} | {
+    type: 'dblclick';
+    data: DblClickEvent;
+    target: HTMLElement | null;
+} | {
+    type: 'auxclick';
+    data: AuxClickEvent;
     target: HTMLElement | null;
 } | {
     type: 'mousemove';
@@ -71,6 +87,38 @@ export declare type MatcherEvent = {
     type: 'wheel';
     data: MachineWheelEvent;
     target: HTMLElement | null;
+} | {
+    type: 'drag';
+    data: DraggingEvent;
+    target: HTMLElement | null;
+} | {
+    type: 'dragstart';
+    data: DragStartEvent;
+    target: HTMLElement | null;
+} | {
+    type: 'dragend';
+    data: DragEndEvent;
+    target: HTMLElement | null;
+} | {
+    type: 'dragenter';
+    data: DragEnterEvent;
+    target: HTMLElement | null;
+} | {
+    type: 'dragover';
+    data: DragOverEvent;
+    target: HTMLElement | null;
+} | {
+    type: 'dragleave';
+    data: DragLeaveEvent;
+    target: HTMLElement | null;
+} | {
+    type: 'drop';
+    data: DropEvent;
+    target: HTMLElement | null;
+} | {
+    type: 'file';
+    data: BrowseFileEvent;
+    target: HTMLElement | null;
 };
 export declare type MatcherState = {
     value: 'INIT';
@@ -79,13 +127,34 @@ export declare type MatcherState = {
     value: 'CLICK';
     context: MatcherContext;
 } | {
+    value: 'RIGHT_CLICK';
+    context: MatcherContext;
+} | {
+    value: 'DBLCLICK';
+    context: MatcherContext;
+} | {
     value: 'DRAG';
+    context: MatcherContext;
+} | {
+    value: 'KEYPRESS';
     context: MatcherContext;
 } | {
     value: 'TEXT';
     context: MatcherContext;
 } | {
+    value: 'BROWSE_FILE';
+    context: MatcherContext;
+} | {
+    value: 'NAVIGATION';
+    context: MatcherContext;
+} | {
     value: 'SCROLL';
+    context: MatcherContext;
+} | {
+    value: 'REFRESH';
+    context: MatcherContext;
+} | {
+    value: 'RESIZE';
     context: MatcherContext;
 } | {
     value: 'UNKNOWN';

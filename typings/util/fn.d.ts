@@ -14,5 +14,5 @@ declare type IModifier = {
     metaKey: boolean;
 };
 export declare function toModifiers(options: IModifier): Modifiers;
-export declare const isInputLikeElement: (element: HTMLElement) => boolean;
+export declare const isInputLikeElement: (element: HTMLElement) => element is HTMLInputElement | HTMLTextAreaElement;
 export {};
