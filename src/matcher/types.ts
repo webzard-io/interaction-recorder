@@ -1,13 +1,23 @@
 import { StateSchema } from 'xstate';
 import {
+  AuxClickEvent,
+  MachineBeforeUnloadEvent,
+  MachineWheelEvent,
   BlurEvent,
+  BrowseFileEvent,
   ClickEvent,
+  DblClickEvent,
+  DragEndEvent,
+  DragEnterEvent,
+  DraggingEvent,
+  DragLeaveEvent,
+  DragOverEvent,
+  DragStartEvent,
+  DropEvent,
   HoverEvent,
   KeydownEvent,
   KeypressEvent,
   KeyupEvent,
-  MachineBeforeUnloadEvent,
-  MachineWheelEvent,
   MousedownEvent,
   MousemoveEvent,
   MouseupEvent,
@@ -26,9 +36,17 @@ export interface MatcherSchema extends StateSchema {
   states: {
     INIT: {};
     CLICK: {};
+    RIGHT_CLICK: {};
+    DBLCLICK: {};
     DRAG: {};
+    KEYPRESS: {};
     TEXT: {};
+    BROWSE_FILE: {};
+    DROP_FILE: {};
+    NAVIGATION: {};
     SCROLL: {};
+    REFRESH: {};
+    RESIZE: {};
     UNKNOWN: {};
   };
 }
@@ -37,6 +55,8 @@ export type MatcherEvent =
   | { type: 'mousedown'; data: MousedownEvent; target: HTMLElement | null }
   | { type: 'mouseup'; data: MouseupEvent; target: HTMLElement | null }
   | { type: 'click'; data: ClickEvent; target: HTMLElement | null }
+  | { type: 'dblclick'; data: DblClickEvent; target: HTMLElement | null }
+  | { type: 'auxclick'; data: AuxClickEvent; target: HTMLElement | null }
   | { type: 'mousemove'; data: MousemoveEvent; target: HTMLElement | null }
   | { type: 'scroll'; data: ScrollEvent; target: HTMLElement | null }
   | { type: 'keydown'; data: KeydownEvent; target: HTMLElement | null }
@@ -51,7 +71,15 @@ export type MatcherEvent =
       target: HTMLElement | null;
     }
   | { type: 'hover'; data: HoverEvent; target: HTMLElement | null }
-  | { type: 'wheel'; data: MachineWheelEvent; target: HTMLElement | null };
+  | { type: 'wheel'; data: MachineWheelEvent; target: HTMLElement | null }
+  | { type: 'drag'; data: DraggingEvent; target: HTMLElement | null }
+  | { type: 'dragstart'; data: DragStartEvent; target: HTMLElement | null }
+  | { type: 'dragend'; data: DragEndEvent; target: HTMLElement | null }
+  | { type: 'dragenter'; data: DragEnterEvent; target: HTMLElement | null }
+  | { type: 'dragover'; data: DragOverEvent; target: HTMLElement | null }
+  | { type: 'dragleave'; data: DragLeaveEvent; target: HTMLElement | null }
+  | { type: 'drop'; data: DropEvent; target: HTMLElement | null }
+  | { type: 'file'; data: BrowseFileEvent; target: HTMLElement | null };
 
 export type MatcherState =
   | {
@@ -63,7 +91,19 @@ export type MatcherState =
       context: MatcherContext;
     }
   | {
+      value: 'RIGHT_CLICK';
+      context: MatcherContext;
+    }
+  | {
+      value: 'DBLCLICK';
+      context: MatcherContext;
+    }
+  | {
       value: 'DRAG';
+      context: MatcherContext;
+    }
+  | {
+      value: 'KEYPRESS';
       context: MatcherContext;
     }
   | {
@@ -71,7 +111,23 @@ export type MatcherState =
       context: MatcherContext;
     }
   | {
+      value: 'BROWSE_FILE';
+      context: MatcherContext;
+    }
+  | {
+      value: 'NAVIGATION';
+      context: MatcherContext;
+    }
+  | {
       value: 'SCROLL';
+      context: MatcherContext;
+    }
+  | {
+      value: 'REFRESH';
+      context: MatcherContext;
+    }
+  | {
+      value: 'RESIZE';
       context: MatcherContext;
     }
   | {

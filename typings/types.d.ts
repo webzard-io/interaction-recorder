@@ -1,14 +1,15 @@
 import { IMeta } from './util/metaquerier';
+import { IDataTransferItem } from './util/entry-reader';
 export declare enum MatcherKey {
     NEW_EVENT = "matcher.newEvent",
     EMIT = "matchere.emit"
 }
 export declare type Step = {
     selector: IMeta;
-    type: 'CLICK' | 'DRAG' | 'TEXT' | 'SCROLL' | 'UNKNOWN';
+    type: 'CLICK' | 'RIGHT_CLICK' | 'DBLCLICK' | 'DRAG' | 'KEYPRESS' | 'TEXT' | 'BROWSE_FILE' | 'DROP_FILE' | 'NAVIGATION' | 'SCROLL' | 'REFRESH' | 'RESIZE' | 'UNKNOWN';
     events: StepEvent[];
 };
-export declare type StepEvent = MouseEvents | ScrollEvent | KeydownEvent | KeypressEvent | TextInputEvent | TextChangeEvent | KeyupEvent | BlurEvent | MachineBeforeUnloadEvent | HoverEvent | MachineWheelEvent;
+export declare type StepEvent = MouseEvents | ScrollEvent | KeydownEvent | KeypressEvent | TextInputEvent | TextChangeEvent | KeyupEvent | BlurEvent | MachineBeforeUnloadEvent | HoverEvent | MachineWheelEvent | DraggingEvent | DropEvent | DragStartEvent | DragEndEvent | DragEnterEvent | DragOverEvent | DragLeaveEvent | BrowseFileEvent;
 export declare type Modifiers = {
     ctrlKey?: true;
     altKey?: true;
@@ -43,11 +44,17 @@ export declare type MouseupEvent = MachineMouseEvent & {
 export declare type ClickEvent = MachineMouseEvent & {
     type: 'click';
 };
+export declare type DblClickEvent = MachineMouseEvent & {
+    type: 'dblclick';
+};
+export declare type AuxClickEvent = MachineMouseEvent & {
+    type: 'auxclick';
+};
 export declare type MousemoveEvent = BaseEvent & {
     type: 'mousemove';
     positions: Array<MousemoveRecord>;
 };
-declare type MouseEvents = MousedownEvent | MouseupEvent | ClickEvent | MousemoveEvent;
+declare type MouseEvents = MousedownEvent | MouseupEvent | ClickEvent | DblClickEvent | AuxClickEvent | MousemoveEvent;
 export declare type ScrollEvent = BaseEvent & {
     type: 'scroll';
     scrollLeft: number;
@@ -90,5 +97,39 @@ export declare type HoverEvent = BaseEvent & {
 };
 export declare type MachineWheelEvent = BaseEvent & {
     type: 'wheel';
+};
+export declare type BaseDragEvent = MachineMouseEvent & {
+    targetIndex: number;
+};
+export declare type DraggingEvent = BaseDragEvent & {
+    type: 'drag';
+};
+export declare type DragStartEvent = BaseDragEvent & {
+    type: 'dragstart';
+    effectAllowed: DataTransfer['effectAllowed'];
+    items: Array<IDataTransferItem | undefined>;
+};
+export declare type DragEndEvent = BaseDragEvent & {
+    type: 'dragend';
+};
+export declare type DragEnterEvent = BaseDragEvent & {
+    type: 'dragenter';
+};
+export declare type DragOverEvent = BaseDragEvent & {
+    type: 'dragover';
+    dropEffect: DataTransfer['dropEffect'];
+};
+export declare type DragLeaveEvent = BaseDragEvent & {
+    type: 'dragleave';
+};
+export declare type DropEvent = BaseDragEvent & {
+    type: 'drop';
+    effectAllowed: DataTransfer['effectAllowed'];
+    dropEffect: DataTransfer['dropEffect'];
+    items: Array<IDataTransferItem | undefined>;
+};
+export declare type BrowseFileEvent = BaseEvent & {
+    type: 'file';
+    files: Array<File>;
 };
 export {};

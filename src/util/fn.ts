@@ -60,7 +60,9 @@ export function toModifiers(options: IModifier): Modifiers {
 }
 
 // to identify if an element is input like.
-export const isInputLikeElement = (element: HTMLElement) => {
+export const isInputLikeElement = (
+  element: HTMLElement,
+): element is HTMLInputElement | HTMLTextAreaElement => {
   switch (element.tagName) {
     case 'INPUT': {
       const { disabled, type } = element as HTMLInputElement;

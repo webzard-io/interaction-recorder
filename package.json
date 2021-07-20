@@ -38,6 +38,7 @@
     "@types/eventemitter2": "^4.1.0",
     "@types/jest": "^26.0.23",
     "@types/puppeteer": "^5.4.3",
+    "@types/wicg-entries-api": "^2020.8.2",
     "@typescript-eslint/eslint-plugin": "^4.27.0",
     "@typescript-eslint/parser": "^4.27.0",
     "cross-env": "^7.0.3",
