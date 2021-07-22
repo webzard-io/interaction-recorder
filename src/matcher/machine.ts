@@ -268,6 +268,12 @@ export class MatcherMachine {
             on: {
               mousemove: {
                 actions: 'mergeStep',
+                cond: ({ currentStep }) =>
+                  !!currentStep &&
+                  !currentStep.events.some(
+                    (event) =>
+                      event.type === 'mouseup' || event.type === 'dragend',
+                  ),
               },
               mouseup: {
                 actions: 'mergeStep',
@@ -288,6 +294,9 @@ export class MatcherMachine {
                 actions: 'mergeStep',
               },
               dragover: {
+                actions: 'mergeStep',
+              },
+              dragend: {
                 actions: 'mergeStep',
               },
               drop: {
