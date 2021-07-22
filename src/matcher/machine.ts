@@ -12,7 +12,6 @@ import {
   StateValue,
 } from 'xstate';
 import { toSCXMLEvent } from 'xstate/lib/utils';
-import { MatcherStep } from './index';
 import { isSpecialKey } from '../util/special-key-map';
 import { isInputLikeElement } from '../util/fn';
 import {
@@ -20,6 +19,8 @@ import {
   MatcherEvent,
   MatcherState,
   MatcherContext,
+  emitFn,
+  MatcherStep,
 } from './types';
 
 const dblclickMaxGap = 350;
@@ -38,7 +39,7 @@ export class MatcherMachine {
     MatcherState
   >;
 
-  private emit: (step: MatcherStep) => void;
+  private emit: emitFn;
 
   private getTargetStateNode(
     state: State<MatcherContext, MatcherEvent, MatcherSchema, MatcherState>,
@@ -68,7 +69,7 @@ export class MatcherMachine {
     return this._service;
   }
 
-  constructor(emit: (step: MatcherStep) => void) {
+  constructor(emit: emitFn) {
     this.emit = emit;
     this._machine = Machine<MatcherContext, MatcherSchema, MatcherEvent>(
       {
@@ -387,7 +388,7 @@ export class MatcherMachine {
         actions: {
           emitStep: assign({
             previousStep: (context) => {
-              context.currentStep && this.emit(context.currentStep);
+              context.currentStep && this.emit('end', context.currentStep);
               return context.currentStep;
             },
             currentStep: (_c) => undefined,
@@ -405,6 +406,7 @@ export class MatcherMachine {
                 ) as MatcherStep['type'],
                 events: [event.data],
               };
+              this.emit('new', newStep);
               return newStep;
             },
           }),
@@ -421,6 +423,7 @@ export class MatcherMachine {
                 ) as MatcherStep['type'],
               };
               newStep.events.push(event.data);
+              this.emit('update', newStep);
               return newStep;
             },
           }),

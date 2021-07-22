@@ -24,8 +24,8 @@ import {
   ScrollEvent,
   TextChangeEvent,
   TextInputEvent,
+  Step,
 } from '../types';
-import { MatcherStep } from './index';
 
 export interface MatcherContext {
   currentStep?: MatcherStep;
@@ -134,3 +134,11 @@ export type MatcherState =
       value: 'UNKNOWN';
       context: MatcherContext;
     };
+
+export type MatcherStep = Omit<Step, 'selector'> & {
+  target: HTMLElement | null;
+};
+
+export type emitType = 'new' | 'end' | 'update';
+
+export type emitFn = (type: emitType, step: MatcherStep) => void;
