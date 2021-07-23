@@ -1,0 +1,9 @@
+# eslint config
+.eslintrc.js
+
+# jest config
+jest.config.js
+jest-puppeteer.config.js
+
+# rollup config
+rollup.config.js
