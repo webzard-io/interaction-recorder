@@ -2,8 +2,10 @@
 import { IDataTransferItem } from './util/entry-reader';
 
 export enum MatcherKey {
-  NEW_EVENT = 'matcher.newEvent',
-  EMIT = 'matchere.emit',
+  RECEIVE_NEW_EVENT = 'matcher.browser_event.new',
+  EMIT_NEW_STEP = 'matcher.step_event.new',
+  EMIT_UPDATE_STEP = 'matcher.step_event.update',
+  EMIT_END_STEP = 'matcher.step_event.end',
 }
 
 export type Step = {

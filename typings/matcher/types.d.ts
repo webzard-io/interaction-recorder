@@ -1,6 +1,5 @@
 import { StateSchema } from 'xstate';
-import { AuxClickEvent, MachineBeforeUnloadEvent, MachineWheelEvent, BlurEvent, BrowseFileEvent, ClickEvent, DblClickEvent, DragEndEvent, DragEnterEvent, DraggingEvent, DragLeaveEvent, DragOverEvent, DragStartEvent, DropEvent, HoverEvent, KeydownEvent, KeypressEvent, KeyupEvent, MousedownEvent, MousemoveEvent, MouseupEvent, ScrollEvent, TextChangeEvent, TextInputEvent } from '../types';
-import { MatcherStep } from './index';
+import { AuxClickEvent, MachineBeforeUnloadEvent, MachineWheelEvent, BlurEvent, BrowseFileEvent, ClickEvent, DblClickEvent, DragEndEvent, DragEnterEvent, DraggingEvent, DragLeaveEvent, DragOverEvent, DragStartEvent, DropEvent, HoverEvent, KeydownEvent, KeypressEvent, KeyupEvent, MousedownEvent, MousemoveEvent, MouseupEvent, ScrollEvent, TextChangeEvent, TextInputEvent, Step } from '../types';
 export interface MatcherContext {
     currentStep?: MatcherStep;
     previousStep?: MatcherStep;
@@ -160,3 +159,8 @@ export declare type MatcherState = {
     value: 'UNKNOWN';
     context: MatcherContext;
 };
+export declare type MatcherStep = Omit<Step, 'selector'> & {
+    target: HTMLElement | null;
+};
+export declare type emitType = 'new' | 'end' | 'update';
+export declare type emitFn = (type: emitType, step: MatcherStep) => void;

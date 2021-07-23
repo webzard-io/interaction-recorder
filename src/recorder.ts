@@ -1,15 +1,10 @@
-import { EventEmitter2, Listener } from 'eventemitter2';
+import { Listener } from 'eventemitter2';
 import { IMatcher } from './matcher';
 import { AbstractObserver, IObserver } from './observers';
-import { MatcherKey, Step, StepEvent } from './types';
-import { BasicMetaQuerier, IMetaQuerier } from './util/metaquerier';
-
-type StepEventHandler = (step: Step) => void;
+import { MatcherKey, StepEvent } from './types';
 
 export type RecorderOptions = {
   matcher: IMatcher;
-  onEmit: StepEventHandler;
-  metaQuerier?: IMetaQuerier;
 };
 
 export class Recorder {
@@ -18,9 +13,6 @@ export class Recorder {
 
   private matcher: IMatcher;
 
-  private onEmit: StepEventHandler;
-  private metaQuerier: IMetaQuerier;
-
   private _state: 'active' | 'inactive' | 'suspend' = 'inactive';
 
   public get state(): 'active' | 'inactive' | 'suspend' {
@@ -28,12 +20,8 @@ export class Recorder {
   }
 
   constructor(options: RecorderOptions) {
-    const { matcher, onEmit, metaQuerier } = options;
+    const { matcher } = options;
     this.matcher = matcher;
-    this.matcher.emitter = new EventEmitter2();
-    this.onEmit = onEmit;
-    this.matcher.emitter.on(MatcherKey.EMIT, this.emitStep.bind(this));
-    this.metaQuerier = metaQuerier || new BasicMetaQuerier();
   }
 
   public start(): void {
@@ -76,7 +64,7 @@ export class Recorder {
     const listener = observer.emitter.on(
       `observer.${observer.name}`,
       (event: StepEvent, target: HTMLElement | null) => {
-        this.matcher.emitter!.emit(MatcherKey.NEW_EVENT, event, target);
+        this.matcher.emitter.emit(MatcherKey.RECEIVE_NEW_EVENT, event, target);
       },
       {
         objectify: true,
@@ -102,25 +90,6 @@ export class Recorder {
     const index = this.observersList.indexOf(observer);
     if (index !== -1) {
       this.observersList.splice(index, 1);
-    }
-  }
-
-  private emitStep(
-    type: Step['type'],
-    events: StepEvent[],
-    target: HTMLElement | null,
-  ) {
-    if (!target) {
-      throw new Error('current target is missing');
-    }
-    if (type === 'UNKNOWN') {
-      console.error(`Unknown events: ${JSON.stringify(events)}`);
-    } else {
-      this.onEmit({
-        selector: this.metaQuerier.getMeta(target),
-        type,
-        events,
-      });
     }
   }
 }

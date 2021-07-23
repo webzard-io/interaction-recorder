@@ -1,6 +1,14 @@
-﻿import { PatternMatcher } from './matcher';
+﻿import { EventEmitter2 } from 'eventemitter2';
+import { MachineMatcher } from './matcher';
+import { MatcherStep } from './matcher/types';
 import { EventObserver } from './observers';
-import { Recorder, RecorderOptions } from './recorder';
+import { Recorder } from './recorder';
+
+export type InteractionRecorderOptions = {
+  onNewStep: (step: MatcherStep) => void;
+  onEndStep: (step: MatcherStep) => void;
+  onUpdateStep: (step: MatcherStep) => void;
+};
 
 export class InteractionRecorder {
   private _observer: EventObserver;
@@ -13,13 +21,16 @@ export class InteractionRecorder {
     return this._recorder;
   }
 
-  constructor(win: Window, options: Omit<RecorderOptions, 'matcher'>) {
+  constructor(win: Window, options?: InteractionRecorderOptions) {
     this._observer = new EventObserver(win);
     this._recorder = new Recorder({
-      ...options,
-      matcher: new PatternMatcher(),
+      matcher: new MachineMatcher({
+        emitter: new EventEmitter2(),
+        onNewStep: options?.onNewStep,
+        onUpdateStep: options?.onUpdateStep,
+        onEndStep: options?.onEndStep,
+      }),
     });
-
     this._recorder.extendObserver(this._observer);
   }
 
