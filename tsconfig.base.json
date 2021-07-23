@@ -11,14 +11,6 @@
       "esnext"
     ],
     "esModuleInterop": true,
-    "typeRoots": [
-      "types"
-    ],
-    "types": [
-      "node",
-      "jest",
-      "wicg-entries-api"
-    ],
     "rootDir": "src",
     "declaration": true,
     "moduleResolution": "Node",
@@ -26,11 +18,4 @@
     "preserveConstEnums": true,
     "skipLibCheck": true
   },
-  "include": [
-    "src"
-  ],
-  "exclude": [
-    "./build/**/*",
-    "./typings/**/*"
-  ]
 }

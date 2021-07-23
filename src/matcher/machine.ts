@@ -13,7 +13,7 @@ import {
 } from 'xstate';
 import { toSCXMLEvent } from 'xstate/lib/utils';
 import { isSpecialKey } from '../util/special-key-map';
-import { isInputLikeElement } from '../util/fn';
+import { isInputLikeElement } from './util';
 import {
   MatcherSchema,
   MatcherEvent,
@@ -21,9 +21,17 @@ import {
   MatcherContext,
   emitFn,
   MatcherStep,
+  MatcherElement,
 } from './types';
 
 const dblclickMaxGap = 350;
+
+const isSameTarget = (
+  ele1: MatcherElement | null | undefined,
+  ele2: MatcherElement | null | undefined,
+): boolean => {
+  return !!ele1 && !!ele2 && ele1.id === ele2.id;
+};
 
 export class MatcherMachine {
   private _machine: StateMachine<
@@ -128,7 +136,7 @@ export class MatcherMachine {
             cond: ({ currentStep }, { target }) => {
               return (
                 !!currentStep &&
-                target === window &&
+                target?.tagName === 'window' &&
                 currentStep.type !== 'BROWSE_FILE'
               );
             },
@@ -161,7 +169,7 @@ export class MatcherMachine {
                       lastEvent.type === 'click' &&
                       event.button === lastEvent.button &&
                       event.timestamp - lastEvent.timestamp <= dblclickMaxGap &&
-                      currentStep.target === target
+                      isSameTarget(currentStep.target, target)
                     );
                   },
                   actions: 'mergeStep',
@@ -231,7 +239,8 @@ export class MatcherMachine {
                   cond: (_c, { target }) => {
                     return (
                       target?.tagName === 'INPUT' &&
-                      (target as HTMLInputElement).type === 'file'
+                      'type' in target.attributes &&
+                      target.attributes['type'].toLowerCase() === 'file'
                     );
                   },
                 },
@@ -337,7 +346,8 @@ export class MatcherMachine {
                   target: 'KEYPRESS',
                   actions: ['emitStep', 'newStep'],
                   cond: ({ currentStep }, { data: event, target }) =>
-                    isSpecialKey(event.key) || currentStep?.target !== target,
+                    isSpecialKey(event.key) ||
+                    !isSameTarget(currentStep?.target, target),
                 },
                 {
                   actions: 'mergeStep',
@@ -353,7 +363,7 @@ export class MatcherMachine {
                 {
                   actions: 'mergeStep',
                   cond: ({ currentStep }, { target }) =>
-                    currentStep?.target === target,
+                    isSameTarget(currentStep?.target, target),
                 },
                 {
                   actions: ['emitStep', 'newStep'],
@@ -363,7 +373,7 @@ export class MatcherMachine {
                 {
                   actions: 'mergeStep',
                   cond: ({ currentStep }, { target }) =>
-                    currentStep?.target === target,
+                    isSameTarget(currentStep?.target, target),
                 },
                 {
                   actions: ['emitStep', 'newStep'],

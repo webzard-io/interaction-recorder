@@ -1,14 +1,18 @@
-import { EventEmitter2 } from 'eventemitter2';
-import { MatcherKey, StepEvent } from '../types';
+﻿import { EventEmitter2 } from 'eventemitter2';
+import { MatcherKey } from '../types';
 import { MatcherMachine } from './machine';
-import { emitType, MatcherStep } from './types';
+import { emitType, MachineMatcherInput, MatcherStep } from './types';
 
-export interface IMatcher {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export interface IMatcher<TInput> {
   emitter: EventEmitter2;
   start(): void;
   suspend(): void;
   stop(): void;
+  listen: MatcherListener<TInput>;
 }
+
+export type MatcherListener<TInput> = (input: TInput) => void;
 
 export type MachineMatcherOptions = {
   emitter: EventEmitter2;
@@ -17,7 +21,7 @@ export type MachineMatcherOptions = {
   onEndStep?: (step: MatcherStep) => void;
 };
 
-export class MachineMatcher implements IMatcher {
+export class MachineMatcher implements IMatcher<MachineMatcherInput> {
   public machine = new MatcherMachine(this.emitStep.bind(this));
   public emitter: EventEmitter2;
 
@@ -35,16 +39,7 @@ export class MachineMatcher implements IMatcher {
 
   public start(): void {
     if (this.state === 'inactive') {
-      this.emitter.addListener(
-        MatcherKey.RECEIVE_NEW_EVENT,
-        (event: StepEvent, target: HTMLElement | null) => {
-          this.machine.send({
-            type: event.type,
-            data: event as any,
-            target: target,
-          });
-        },
-      );
+      this.emitter.addListener(MatcherKey.RECEIVE_NEW_EVENT, this.listen.bind(this));
     }
     this.state = 'active';
   }
@@ -63,5 +58,16 @@ export class MachineMatcher implements IMatcher {
   private emitStep(type: emitType, step: MatcherStep) {
     const fn = this.handler[type];
     fn && fn(step);
+  }
+
+  public listen(input: MachineMatcherInput) {
+    arguments.callee;
+    const { event, element: target } = input;
+    this.machine.send({
+      type: event.type,
+      // TODO: remove as any, add key-value map for type and data;
+      data: event as any,
+      target,
+    });
   }
 }
