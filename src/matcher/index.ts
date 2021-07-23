@@ -36,7 +36,7 @@ export class MachineMatcher implements IMatcher {
   public start(): void {
     if (this.state === 'inactive') {
       this.emitter.addListener(
-        MatcherKey.NEW_EVENT,
+        MatcherKey.RECEIVE_NEW_EVENT,
         (event: StepEvent, target: HTMLElement | null) => {
           this.machine.send({
             type: event.type,

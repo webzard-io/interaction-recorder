@@ -64,7 +64,7 @@ export class Recorder {
     const listener = observer.emitter.on(
       `observer.${observer.name}`,
       (event: StepEvent, target: HTMLElement | null) => {
-        this.matcher.emitter.emit(MatcherKey.NEW_EVENT, event, target);
+        this.matcher.emitter.emit(MatcherKey.RECEIVE_NEW_EVENT, event, target);
       },
       {
         objectify: true,
