@@ -39,7 +39,10 @@ export class MachineMatcher implements IMatcher<MachineMatcherInput> {
 
   public start(): void {
     if (this.state === 'inactive') {
-      this.emitter.addListener(MatcherKey.RECEIVE_NEW_EVENT, this.listen.bind(this));
+      this.emitter.addListener(
+        MatcherKey.RECEIVE_NEW_EVENT,
+        this.listen.bind(this),
+      );
     }
     this.state = 'active';
   }

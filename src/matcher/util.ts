@@ -1,4 +1,4 @@
-import { MatcherElement } from "./types";
+import { MatcherElement } from './types';
 
 export const isInputLikeElement = (element: MatcherElement): boolean => {
   switch (element.tagName) {
