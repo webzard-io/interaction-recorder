@@ -10,7 +10,7 @@ module.exports = {
     browser: true
   },
   parserOptions: {
-    project: ['./tsconfig.json'],
+    project: ['./tsconfig.json', './src/matcher/tsconfig.json'],
     tsconfigRootDir: './',
     createDefaultProgram: true,
   },

@@ -1,36 +1,16 @@
 {
-  "compilerOptions": {
-    "target": "es6",
-    "sourceMap": true,
-    "module": "ESNext",
-    "outDir": "build",
-    "strict": true,
-    "lib": [
-      "DOM",
-      "DOM.Iterable",
-      "esnext"
-    ],
-    "esModuleInterop": true,
-    "typeRoots": [
-      "types"
-    ],
-    "types": [
-      "node",
-      "jest",
-      "wicg-entries-api"
-    ],
-    "rootDir": "src",
-    "declaration": true,
-    "moduleResolution": "Node",
-    "removeComments": true,
-    "preserveConstEnums": true,
-    "skipLibCheck": true
-  },
+  "extends": "./tsconfig.base.json",
   "include": [
-    "src"
+    "./src/**/*.ts"
   ],
   "exclude": [
-    "./build/**/*",
-    "./typings/**/*"
-  ]
+    "./src/matcher/"
+  ],
+  "compilerOptions": {
+    "lib": [
+      "DOM",
+      "ESNext",
+      "DOM.Iterable"
+    ]
+  }
 }

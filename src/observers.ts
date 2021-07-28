@@ -4,15 +4,26 @@ import { EventEmitter2 } from 'eventemitter2';
 import { isInputLikeElement, on, ResetHandler, toModifiers } from './util/fn';
 import { getSerializedDataTransferItemList } from './util/entry-reader';
 
-export interface IObserver {
+export interface IObserver<TOutput> {
   name: string;
   emitter: EventEmitter2;
   start(): void;
   stop(): void;
   suspend(): void;
+  on(listenerFn: ObserverListener<TOutput>): ObserverListener<TOutput>;
+  off(listenerFn: ObserverListener<TOutput>): void;
 }
 
-export abstract class AbstractObserver implements IObserver {
+export type ObserverListener<TOutput> = (output: TOutput) => void;
+
+export type EventProcessor<TEvent, TOutput> = (
+  event: TEvent,
+  ...args: any[]
+) => TOutput;
+
+export abstract class AbstractObserver<TEvent, TOutput>
+  implements IObserver<TOutput>
+{
   abstract name: string;
   abstract emitter: EventEmitter2;
 
@@ -21,10 +32,11 @@ export abstract class AbstractObserver implements IObserver {
   abstract suspend(): void;
 
   private static throttleManager = new ThrottleManager();
+  protected preprocess: EventProcessor<TEvent, TOutput>;
   protected getThrottler: typeof ThrottleManager.prototype.getThrottle;
   protected invokeAll: typeof ThrottleManager.prototype.invokeAll;
 
-  constructor() {
+  constructor(preprocess: EventProcessor<TEvent, TOutput>) {
     this.getThrottler = (...args) => {
       return AbstractObserver.throttleManager.getThrottle(...args);
     };
@@ -32,19 +44,28 @@ export abstract class AbstractObserver implements IObserver {
     this.invokeAll = () => {
       return AbstractObserver.throttleManager.invokeAll();
     };
+    this.preprocess = preprocess;
   }
 
-  protected onEmit(
-    event: StepEvent,
-    target: HTMLElement | null,
-    fromThrottler = false,
-  ) {
+  protected onEmit(event: TEvent, args: any[], fromThrottler = false) {
     !fromThrottler && AbstractObserver.throttleManager.invokeAll();
-    this.emitter.emit(`observer.${this.name}`, event, target);
+    this.emitter.emit(`observer.${this.name}`, this.preprocess(event, ...args));
+  }
+
+  public on(listener: ObserverListener<TOutput>): ObserverListener<TOutput> {
+    this.emitter.on(`observer.${this.name}`, listener);
+    return listener;
+  }
+
+  public off(listener: ObserverListener<TOutput>): void {
+    this.emitter.off(`observer.${this.name}`, listener);
   }
 }
 
-export class EventObserver extends AbstractObserver {
+export class EventObserver<TOutput> extends AbstractObserver<
+  StepEvent,
+  TOutput
+> {
   public name = 'Event';
   public emitter = new EventEmitter2();
 
@@ -56,8 +77,8 @@ export class EventObserver extends AbstractObserver {
 
   private previousDragOverTarget: EventTarget | null = null;
 
-  constructor(win: Window) {
-    super();
+  constructor(win: Window, preprocess: EventProcessor<StepEvent, TOutput>) {
+    super(preprocess);
     this.win = win;
   }
 
@@ -126,7 +147,7 @@ export class EventObserver extends AbstractObserver {
             modifiers: toModifiers(event),
             timestamp: this.now,
           },
-          event.target as HTMLElement,
+          [event.target as HTMLElement],
         );
       };
     };
@@ -153,7 +174,7 @@ export class EventObserver extends AbstractObserver {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             timestamp: timeBaseline!,
           },
-          null,
+          [null],
           true,
         );
         positions = [];
@@ -226,7 +247,7 @@ export class EventObserver extends AbstractObserver {
               scrollTop: scrollEl.scrollTop,
               timestamp: this.now,
             },
-            this.win.document.body,
+            [this.win.document.body],
             true,
           );
         } else {
@@ -238,7 +259,7 @@ export class EventObserver extends AbstractObserver {
               scrollTop: target.scrollTop,
               timestamp: this.now,
             },
-            target,
+            [target],
             true,
           );
         }
@@ -264,7 +285,7 @@ export class EventObserver extends AbstractObserver {
             modifiers: toModifiers(evt as KeyboardEvent),
             timestamp: this.now,
           },
-          evt.target as HTMLElement,
+          [evt.target as HTMLElement],
         );
       };
     };
@@ -291,7 +312,7 @@ export class EventObserver extends AbstractObserver {
             value: '',
             timestamp: this.now,
           },
-          evt.target as HTMLElement,
+          [evt.target],
         );
       }
     };
@@ -313,7 +334,7 @@ export class EventObserver extends AbstractObserver {
               value: target.value,
               timestamp: this.now,
             },
-            target,
+            [target],
           );
         } else if (target.isContentEditable) {
           return this.onEmit(
@@ -322,7 +343,7 @@ export class EventObserver extends AbstractObserver {
               value: target.innerHTML,
               timestamp: this.now,
             },
-            target,
+            [target],
           );
         }
       }
@@ -341,7 +362,7 @@ export class EventObserver extends AbstractObserver {
           type: 'blur',
           timestamp: this.now,
         },
-        event.target as HTMLElement,
+        [event.target],
       );
     };
 
@@ -358,7 +379,7 @@ export class EventObserver extends AbstractObserver {
           type: 'before_unload',
           timestamp: this.now,
         },
-        null,
+        [null],
       );
     };
     this.handlers.push(on('beforeunload', handler, this.win));
@@ -393,7 +414,7 @@ export class EventObserver extends AbstractObserver {
               type: 'wheel',
               timestamp: this.now,
             },
-            target,
+            [target],
             true,
           );
         }
@@ -435,7 +456,7 @@ export class EventObserver extends AbstractObserver {
           effectAllowed: dataTransfer?.effectAllowed || 'uninitialized',
           items: await getSerializedDataTransferItemList(event.dataTransfer),
         },
-        event.target as HTMLElement,
+        [event.target],
       );
     };
     // drag will trigger multiple times
@@ -459,7 +480,7 @@ export class EventObserver extends AbstractObserver {
             modifiers: toModifiers(event),
             targetIndex: 0,
           },
-          null,
+          [null],
           true,
         );
       },
@@ -487,7 +508,7 @@ export class EventObserver extends AbstractObserver {
             modifiers: toModifiers(event),
             targetIndex: 0,
           },
-          null,
+          [null],
           true,
         );
         this.previousDragOverTarget = event.target;
@@ -512,7 +533,7 @@ export class EventObserver extends AbstractObserver {
           modifiers: toModifiers(event),
           targetIndex: 0,
         },
-        event.target as HTMLElement,
+        [event.target],
       );
       // reset previous dragover target when drag is ended;
       this.previousDragOverTarget = null;
@@ -547,7 +568,7 @@ export class EventObserver extends AbstractObserver {
           effectAllowed: dataTransfer?.effectAllowed || 'uninitialized',
           items: await getSerializedDataTransferItemList(dataTransfer),
         },
-        event.target as HTMLElement,
+        [event.target as HTMLElement],
       );
     };
 
@@ -570,7 +591,7 @@ export class EventObserver extends AbstractObserver {
             modifiers: toModifiers(event),
             targetIndex: 0,
           },
-          null,
+          [null],
           true,
         );
       };
@@ -606,7 +627,7 @@ export class EventObserver extends AbstractObserver {
           files: target.files ? [...target.files] : [],
           timestamp: this.now,
         },
-        target,
+        [target],
       );
     };
 

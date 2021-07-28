@@ -25,6 +25,7 @@ import {
   TextChangeEvent,
   TextInputEvent,
   Step,
+  StepEvent,
 } from '../types';
 
 export interface MatcherContext {
@@ -52,34 +53,38 @@ export interface MatcherSchema extends StateSchema {
 }
 /* eslint-enable @typescript-eslint/ban-types */
 export type MatcherEvent =
-  | { type: 'mousedown'; data: MousedownEvent; target: HTMLElement | null }
-  | { type: 'mouseup'; data: MouseupEvent; target: HTMLElement | null }
-  | { type: 'click'; data: ClickEvent; target: HTMLElement | null }
-  | { type: 'dblclick'; data: DblClickEvent; target: HTMLElement | null }
-  | { type: 'auxclick'; data: AuxClickEvent; target: HTMLElement | null }
-  | { type: 'mousemove'; data: MousemoveEvent; target: HTMLElement | null }
-  | { type: 'scroll'; data: ScrollEvent; target: HTMLElement | null }
-  | { type: 'keydown'; data: KeydownEvent; target: HTMLElement | null }
-  | { type: 'keypress'; data: KeypressEvent; target: HTMLElement | null }
-  | { type: 'keyup'; data: KeyupEvent; target: HTMLElement | null }
-  | { type: 'text_input'; data: TextInputEvent; target: HTMLElement | null }
-  | { type: 'text_change'; data: TextChangeEvent; target: HTMLElement | null }
-  | { type: 'blur'; data: BlurEvent; target: HTMLElement | null }
+  | { type: 'mousedown'; data: MousedownEvent; target: MatcherElement | null }
+  | { type: 'mouseup'; data: MouseupEvent; target: MatcherElement | null }
+  | { type: 'click'; data: ClickEvent; target: MatcherElement | null }
+  | { type: 'dblclick'; data: DblClickEvent; target: MatcherElement | null }
+  | { type: 'auxclick'; data: AuxClickEvent; target: MatcherElement | null }
+  | { type: 'mousemove'; data: MousemoveEvent; target: MatcherElement | null }
+  | { type: 'scroll'; data: ScrollEvent; target: MatcherElement | null }
+  | { type: 'keydown'; data: KeydownEvent; target: MatcherElement | null }
+  | { type: 'keypress'; data: KeypressEvent; target: MatcherElement | null }
+  | { type: 'keyup'; data: KeyupEvent; target: MatcherElement | null }
+  | { type: 'text_input'; data: TextInputEvent; target: MatcherElement | null }
+  | {
+      type: 'text_change';
+      data: TextChangeEvent;
+      target: MatcherElement | null;
+    }
+  | { type: 'blur'; data: BlurEvent; target: MatcherElement | null }
   | {
       type: 'before_unload';
       data: MachineBeforeUnloadEvent;
-      target: HTMLElement | null;
+      target: MatcherElement | null;
     }
-  | { type: 'hover'; data: HoverEvent; target: HTMLElement | null }
-  | { type: 'wheel'; data: MachineWheelEvent; target: HTMLElement | null }
-  | { type: 'drag'; data: DraggingEvent; target: HTMLElement | null }
-  | { type: 'dragstart'; data: DragStartEvent; target: HTMLElement | null }
-  | { type: 'dragend'; data: DragEndEvent; target: HTMLElement | null }
-  | { type: 'dragenter'; data: DragEnterEvent; target: HTMLElement | null }
-  | { type: 'dragover'; data: DragOverEvent; target: HTMLElement | null }
-  | { type: 'dragleave'; data: DragLeaveEvent; target: HTMLElement | null }
-  | { type: 'drop'; data: DropEvent; target: HTMLElement | null }
-  | { type: 'file'; data: BrowseFileEvent; target: HTMLElement | null };
+  | { type: 'hover'; data: HoverEvent; target: MatcherElement | null }
+  | { type: 'wheel'; data: MachineWheelEvent; target: MatcherElement | null }
+  | { type: 'drag'; data: DraggingEvent; target: MatcherElement | null }
+  | { type: 'dragstart'; data: DragStartEvent; target: MatcherElement | null }
+  | { type: 'dragend'; data: DragEndEvent; target: MatcherElement | null }
+  | { type: 'dragenter'; data: DragEnterEvent; target: MatcherElement | null }
+  | { type: 'dragover'; data: DragOverEvent; target: MatcherElement | null }
+  | { type: 'dragleave'; data: DragLeaveEvent; target: MatcherElement | null }
+  | { type: 'drop'; data: DropEvent; target: MatcherElement | null }
+  | { type: 'file'; data: BrowseFileEvent; target: MatcherElement | null };
 
 export type MatcherState =
   | {
@@ -136,7 +141,18 @@ export type MatcherState =
     };
 
 export type MatcherStep = Omit<Step, 'selector'> & {
-  target: HTMLElement | null;
+  target: MatcherElement | null;
+};
+
+export type MatcherElement = {
+  id: string;
+  tagName: string;
+  attributes: Record<string, string>;
+};
+
+export type MachineMatcherInput = {
+  element: MatcherElement | null;
+  event: StepEvent;
 };
 
 export type emitType = 'new' | 'end' | 'update';

@@ -91,3 +91,27 @@ export const isInputLikeElement = (
       return element.isContentEditable;
   }
 };
+
+// https://levelup.gitconnected.com/generate-unique-id-in-the-browser-without-a-library-50618cdc3cb1
+export const randomId = (length = 16): string => {
+  if (length <= 0) {
+    throw new Error('length should be greater than 0');
+  }
+  if (length > 32) {
+    throw new Error('length should less or equal to 32');
+  }
+  const uintSize = Math.ceil(length / 8);
+  return crypto
+    .getRandomValues(new Uint32Array(uintSize))
+    .reduce<string>((prev, curr, index) => {
+      let val = curr.toString(16);
+      const needed = index + 1 === uintSize ? length - index * 8 : 8;
+      if (val.length < needed) {
+        const append = '0'.repeat(needed - val.length);
+        val = append + val;
+      } else if (val.length > needed) {
+        val = val.slice(0, needed);
+      }
+      return prev + val;
+    }, '');
+};

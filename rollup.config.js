@@ -18,7 +18,9 @@ module.exports = [
       commonjs(),
       external(),
       resolve({ browser: true, preferBuiltins: true }),
-      typescript(),
+      typescript({
+        tsconfig: "./src/tsconfig.json"
+      }),
       production && terser(),
     ],
   },
@@ -37,7 +39,9 @@ module.exports = [
       replace({
         'process.env.NODE_ENV': JSON.stringify('production')
       }),
-      typescript(),
+      typescript({
+        tsconfig: "./src/tsconfig.json"
+      }),
     ],
   },
 ];

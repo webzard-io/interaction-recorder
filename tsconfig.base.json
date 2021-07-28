@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "sourceMap": true,
+    "module": "ESNext",
+    "outDir": "build",
+    "strict": true,
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "esnext"
+    ],
+    "esModuleInterop": true,
+    "rootDir": "src",
+    "declaration": true,
+    "moduleResolution": "Node",
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "skipLibCheck": true
+  },
+}

@@ -1,18 +1,18 @@
 import { IMatcher } from './matcher';
 import { AbstractObserver } from './observers';
-export declare type RecorderOptions = {
-    matcher: IMatcher;
+export declare type RecorderOptions<TMiddleware> = {
+    matcher: IMatcher<TMiddleware>;
 };
-export declare class Recorder {
+export declare class Recorder<TEvent, TMiddleware> {
     private observersList;
     private listenerMap;
     private matcher;
     private _state;
     get state(): 'active' | 'inactive' | 'suspend';
-    constructor(options: RecorderOptions);
+    constructor(options: RecorderOptions<TMiddleware>);
     start(): void;
     suspend(): void;
     stop(): void;
-    extendObserver(observer: AbstractObserver): AbstractObserver;
-    removeObserver(observer: AbstractObserver): void;
+    extendObserver(observer: AbstractObserver<TEvent, TMiddleware>): AbstractObserver<TEvent, TMiddleware>;
+    removeObserver(observer: AbstractObserver<TEvent, TMiddleware>): void;
 }

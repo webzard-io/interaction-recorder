@@ -1,17 +1,20 @@
-import { Listener } from 'eventemitter2';
-import { IMatcher } from './matcher';
-import { AbstractObserver, IObserver } from './observers';
-import { MatcherKey, StepEvent } from './types';
+﻿import { IMatcher } from './matcher';
+import { AbstractObserver } from './observers';
+import { MatcherKey } from './types';
 
-export type RecorderOptions = {
-  matcher: IMatcher;
+export type RecorderOptions<TMiddleware> = {
+  matcher: IMatcher<TMiddleware>;
 };
 
-export class Recorder {
-  private observersList: IObserver[] = [];
-  private listenerMap: WeakMap<IObserver, Listener> = new WeakMap();
+export class Recorder<TEvent, TMiddleware> {
+  private observersList: AbstractObserver<TEvent, TMiddleware>[] = [];
+  private listenerMap: WeakMap<
+    AbstractObserver<TEvent, TMiddleware>,
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    (middleware: TMiddleware) => void
+  > = new WeakMap();
 
-  private matcher: IMatcher;
+  private matcher: IMatcher<TMiddleware>;
 
   private _state: 'active' | 'inactive' | 'suspend' = 'inactive';
 
@@ -19,7 +22,7 @@ export class Recorder {
     return this._state;
   }
 
-  constructor(options: RecorderOptions) {
+  constructor(options: RecorderOptions<TMiddleware>) {
     const { matcher } = options;
     this.matcher = matcher;
   }
@@ -48,7 +51,9 @@ export class Recorder {
     this.matcher.stop();
   }
 
-  public extendObserver(observer: AbstractObserver): AbstractObserver {
+  public extendObserver(
+    observer: AbstractObserver<TEvent, TMiddleware>,
+  ): AbstractObserver<TEvent, TMiddleware> {
     if (this._state === 'active') {
       console.warn(
         'cannot extend recorder when active, please suspend or stop recorder first',
@@ -61,21 +66,14 @@ export class Recorder {
     }
     // add observer emitter;
     this.observersList.push(observer);
-    const listener = observer.emitter.on(
-      `observer.${observer.name}`,
-      (event: StepEvent, target: HTMLElement | null) => {
-        this.matcher.emitter.emit(MatcherKey.RECEIVE_NEW_EVENT, event, target);
-      },
-      {
-        objectify: true,
-      },
-    ) as Listener;
-
+    const listener = observer.on((event) => {
+      this.matcher.emitter.emit(MatcherKey.RECEIVE_NEW_EVENT, event);
+    });
     this.listenerMap.set(observer, listener);
     return observer;
   }
 
-  public removeObserver(observer: AbstractObserver): void {
+  public removeObserver(observer: AbstractObserver<TEvent, TMiddleware>): void {
     if (this._state === 'active') {
       console.warn(
         'cannot extend recorder when active, please suspend or stop recorder first',
@@ -84,8 +82,7 @@ export class Recorder {
     }
     // remove observer emitter;
     const listener = this.listenerMap.get(observer);
-    listener &&
-      observer.emitter.off(`observer.${observer.name}`, listener.listener);
+    listener && observer.emitter.off(`observer.${observer.name}`, listener);
     this.listenerMap.delete(observer);
     const index = this.observersList.indexOf(observer);
     if (index !== -1) {
