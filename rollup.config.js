@@ -19,7 +19,7 @@ module.exports = [
       external(),
       resolve({ browser: true, preferBuiltins: true }),
       typescript({
-        tsconfig: "./src/tsconfig.json"
+        tsconfig: "./tsconfig.json"
       }),
       production && terser(),
     ],
@@ -40,7 +40,7 @@ module.exports = [
         'process.env.NODE_ENV': JSON.stringify('production')
       }),
       typescript({
-        tsconfig: "./src/tsconfig.json"
+        tsconfig: "./tsconfig.json"
       }),
     ],
   },
