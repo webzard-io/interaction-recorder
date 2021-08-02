@@ -145,6 +145,10 @@ export class MatcherMachine {
             target: 'BROWSE_FILE',
             actions: ['emitStep', 'newStep'],
           },
+          hover: {
+            target: 'HOVER',
+            actions: ['emitStep', 'newStep'],
+          },
           '*': {
             target: 'UNKNOWN',
             actions: ['emitStep', 'newStep'],
@@ -400,6 +404,7 @@ export class MatcherMachine {
           },
           REFRESH: {},
           RESIZE: {},
+          HOVER: {},
           UNKNOWN: {},
         },
       },

@@ -15,6 +15,7 @@ export declare type MachineMatcherOptions = {
     onUpdateStep?: (step: MatcherStep) => void;
     onEndStep?: (step: MatcherStep) => void;
 };
+export * from './types';
 export declare class MachineMatcher implements IMatcher<MachineMatcherInput> {
     machine: MatcherMachine;
     emitter: EventEmitter2;

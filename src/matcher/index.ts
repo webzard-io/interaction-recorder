@@ -21,6 +21,8 @@ export type MachineMatcherOptions = {
   onEndStep?: (step: MatcherStep) => void;
 };
 
+export * from './types';
+
 export class MachineMatcher implements IMatcher<MachineMatcherInput> {
   public machine = new MatcherMachine(this.emitStep.bind(this));
   public emitter: EventEmitter2;
