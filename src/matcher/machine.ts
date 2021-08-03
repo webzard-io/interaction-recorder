@@ -252,6 +252,10 @@ export class MatcherMachine {
                   actions: 'mergeStep',
                 },
               ],
+              scroll: {
+                target: 'SCROLL',
+                actions: 'mergeStep',
+              },
             },
           },
           RIGHT_CLICK: {
@@ -397,9 +401,29 @@ export class MatcherMachine {
           NAVIGATION: {},
           SCROLL: {
             on: {
-              scroll: {
-                actions: 'mergeStep',
-              },
+              scroll: [
+                {
+                  actions: 'mergeStep',
+                  cond: ({ currentStep }, { target }) =>
+                    !isSameTarget(currentStep?.target, target),
+                },
+                {
+                  // ignore non same target scroll event.
+                  actions: [],
+                },
+              ],
+              wheel: [
+                {
+                  actions: ['emitStep', 'newStep'],
+                  cond: ({ currentStep }, { target }) =>
+                    !isSameTarget(currentStep?.target, target),
+                },
+                {
+                  actions: [],
+                },
+              ],
+              mouseup: {},
+              click: {},
             },
           },
           REFRESH: {},

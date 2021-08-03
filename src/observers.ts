@@ -421,7 +421,7 @@ export class EventObserver<TOutput> extends AbstractObserver<
       },
       500,
     );
-    this.handlers.push(on('wheel', handler, this.win));
+    this.handlers.push(on('wheel', handler, this.win.document));
   }
 
   private observerDrag() {
