@@ -327,12 +327,14 @@ export class MatcherMachine {
                 actions: 'mergeStep',
                 cond: ({ currentStep }) =>
                   !!currentStep &&
-                  currentStep.events.filter(
-                    (event) => event.type === 'keydown',
-                  ) >
-                    currentStep.events.filter(
-                      (event) => event.type === 'keyup',
-                    ),
+                  currentStep.events.reduce<number>((sum, curr) => {
+                    if (curr.type === 'keydown') {
+                      return sum + 1;
+                    } else if (curr.type === 'keyup') {
+                      return sum - 1;
+                    }
+                    return sum;
+                  }, 0) > 0,
               },
               keypress: {
                 actions: 'mergeStep',
