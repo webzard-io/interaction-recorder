@@ -326,6 +326,7 @@ export class MatcherMachine {
               keydown: {
                 actions: 'mergeStep',
                 cond: ({ currentStep }) =>
+                  // for a key pressing without release the previous one, (mostly used in combination key), treat it as the same step
                   !!currentStep &&
                   currentStep.events.reduce<number>((sum, curr) => {
                     if (curr.type === 'keydown') {
