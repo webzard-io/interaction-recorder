@@ -323,22 +323,17 @@ export class MatcherMachine {
           },
           KEYPRESS: {
             on: {
-              keydown: [
-                {
-                  actions: 'mergeStep',
-                  cond: ({ currentStep }) =>
-                    !!currentStep &&
+              keydown: {
+                actions: 'mergeStep',
+                cond: ({ currentStep }) =>
+                  !!currentStep &&
+                  currentStep.events.filter(
+                    (event) => event.type === 'keydown',
+                  ) >
                     currentStep.events.filter(
-                      (event) => event.type === 'keydown',
-                    ) >
-                      currentStep.events.filter(
-                        (event) => event.type === 'keyup',
-                      ),
-                },
-                {
-                  actions: ['emitStep', 'newStep'],
-                },
-              ],
+                      (event) => event.type === 'keyup',
+                    ),
+              },
               keypress: {
                 actions: 'mergeStep',
               },
