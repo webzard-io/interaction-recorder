@@ -145,6 +145,10 @@ export class MatcherMachine {
             target: 'BROWSE_FILE',
             actions: ['emitStep', 'newStep'],
           },
+          hover: {
+            target: 'HOVER',
+            actions: ['emitStep', 'newStep'],
+          },
           '*': {
             target: 'UNKNOWN',
             actions: ['emitStep', 'newStep'],
@@ -248,6 +252,10 @@ export class MatcherMachine {
                   actions: 'mergeStep',
                 },
               ],
+              scroll: {
+                target: 'SCROLL',
+                actions: 'mergeStep',
+              },
             },
           },
           RIGHT_CLICK: {
@@ -315,22 +323,20 @@ export class MatcherMachine {
           },
           KEYPRESS: {
             on: {
-              keydown: [
-                {
-                  actions: 'mergeStep',
-                  cond: ({ currentStep }) =>
-                    !!currentStep &&
-                    currentStep.events.filter(
-                      (event) => event.type === 'keydown',
-                    ) >
-                      currentStep.events.filter(
-                        (event) => event.type === 'keyup',
-                      ),
-                },
-                {
-                  actions: ['emitStep', 'newStep'],
-                },
-              ],
+              keydown: {
+                actions: 'mergeStep',
+                cond: ({ currentStep }) =>
+                  // for a key pressing without release the previous one, (mostly used in combination key), treat it as the same step
+                  !!currentStep &&
+                  currentStep.events.reduce<number>((sum, curr) => {
+                    if (curr.type === 'keydown') {
+                      return sum + 1;
+                    } else if (curr.type === 'keyup') {
+                      return sum - 1;
+                    }
+                    return sum;
+                  }, 0) > 0,
+              },
               keypress: {
                 actions: 'mergeStep',
               },
@@ -393,13 +399,34 @@ export class MatcherMachine {
           NAVIGATION: {},
           SCROLL: {
             on: {
-              scroll: {
-                actions: 'mergeStep',
-              },
+              scroll: [
+                {
+                  actions: 'mergeStep',
+                  cond: ({ currentStep }, { target }) =>
+                    !isSameTarget(currentStep?.target, target),
+                },
+                {
+                  // ignore non same target scroll event.
+                  actions: [],
+                },
+              ],
+              wheel: [
+                {
+                  actions: ['emitStep', 'newStep'],
+                  cond: ({ currentStep }, { target }) =>
+                    !isSameTarget(currentStep?.target, target),
+                },
+                {
+                  actions: [],
+                },
+              ],
+              mouseup: {},
+              click: {},
             },
           },
           REFRESH: {},
           RESIZE: {},
+          HOVER: {},
           UNKNOWN: {},
         },
       },

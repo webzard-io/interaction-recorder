@@ -19,6 +19,7 @@ export interface MatcherSchema extends StateSchema {
         SCROLL: {};
         REFRESH: {};
         RESIZE: {};
+        HOVER: {};
         UNKNOWN: {};
     };
 }

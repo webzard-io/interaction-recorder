@@ -23,6 +23,7 @@ export type Step = {
     | 'SCROLL'
     | 'REFRESH'
     | 'RESIZE'
+    | 'HOVER'
     | 'UNKNOWN';
   events: StepEvent[];
 };
