@@ -5,6 +5,7 @@ module.exports = {
   globals: {
     "ts-jest": {
       diagnostics: false,
+      tsconfig: './__tests__/tsconfig.json'
     }
   },
   moduleFileExtensions: ['ts', 'js'],
@@ -13,5 +14,5 @@ module.exports = {
   collectCoverageFrom: ['<rootDir>/src/**/*.ts'],
   coverageReporters: ['text-summary', 'lcov'],
   collectCoverage: Boolean(process.env.COVERAGE),
-  coverageDirectory: './__tests__/coverage'
+  coverageDirectory: './__tests__/coverage',
 }

@@ -140,6 +140,7 @@ export class MatcherMachine {
                 currentStep.type !== 'BROWSE_FILE'
               );
             },
+            target: 'INIT',
           },
           file: {
             target: 'BROWSE_FILE',

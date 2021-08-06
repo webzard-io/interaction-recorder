@@ -1,0 +1,20 @@
+{
+  "extends": "../tsconfig.base.json",
+  "include": [
+    "./web",
+    "./units"
+  ],
+  "compilerOptions": {
+    "lib": [
+      "DOM",
+      "ESNext",
+      "DOM.Iterable"
+    ],
+    "types": [
+      "puppeteer",
+      "jest",
+      "jest-environment-puppeteer"
+    ],
+    "rootDir": "./"
+  }
+}
