@@ -2,7 +2,9 @@ import { Page, CDPSession, Protocol } from 'puppeteer/lib/types';
 import * as fs from 'fs';
 import * as path from 'path';
 
-// throw exception when
+const ISOLATED_WORLD_NAME = '__puppeteer_utility_world__';
+
+// throw exception when evalute error
 const createEvaluateResponseProxy = () =>
   new Proxy<{
     res: Protocol.Runtime.EvaluateResponse | undefined;
@@ -23,11 +25,20 @@ const createEvaluateResponseProxy = () =>
     },
   );
 
+/**
+ * @class IsolatedWorld  
+ * event dispatch by puppeteer will be captured by the isolated context's window, so we need to inject recorder to isolated context
+ * but isolated context cannot be get directly, so we need to implement a function to get the isolated context.
+ * And wrap it into a class.
+ */
 export class IsolatedWorld {
   private client: CDPSession;
+  // remember the context id of isolated world
   private isolatedId: Promise<number>;
+  // if recorder was injected
   private recorderInjected: Promise<boolean>;
   private recorderResolver!: (flag: boolean) => void;
+
   constructor(page: Page) {
     const frame = page.mainFrame();
     this.client = frame._frameManager._client;
@@ -40,10 +51,10 @@ export class IsolatedWorld {
     this.recorderInjected = new Promise<boolean>((res) => {
       this.recorderResolver = res;
     });
-
+    // when a new isolated context of puppeteer was created, mark it as the target context and record id.
     const handler = (event: Protocol.Runtime.ExecutionContextCreatedEvent) => {
       const { id, name } = event.context;
-      if (name === '__puppeteer_utility_world__') {
+      if (name === ISOLATED_WORLD_NAME) {
         resolver(id);
         this.client.off('Runtime.executionContextCreated', handler);
       }
@@ -71,6 +82,7 @@ export class IsolatedWorld {
     }
   }
 
+  // inject recorder and create some object to store data from recorder
   public async createRecorder() {
     const id = await this.isolatedId;
     // wait for recorder resolver was actived
@@ -135,6 +147,7 @@ export class IsolatedWorld {
   }
 
   // create a fake Date constructor, it will get static time if user doesn't specified timestamp;
+  // give an interval parameter to fake the time is going;
   public async useFakeDateTime(interval = 500) {
     const id = await this.isolatedId;
     try {
@@ -174,7 +187,11 @@ export class IsolatedWorld {
       const resultProxy = createEvaluateResponseProxy();
       resultProxy.res = await this.client.send('Runtime.evaluate', {
         expression: `
+        if(__pDate!==undefined){
           Date = __pDate;
+          __pDate = undefined;
+        }
+
         `,
         contextId: id,
       });
