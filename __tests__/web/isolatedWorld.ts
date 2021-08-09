@@ -5,7 +5,7 @@ import * as path from 'path';
 const ISOLATED_WORLD_NAME = '__puppeteer_utility_world__';
 
 // throw exception when evalute error
-const createEvaluateResponseProxy = () =>
+export const createEvaluateResponseProxy = () =>
   new Proxy<{
     res: Protocol.Runtime.EvaluateResponse | undefined;
   }>(
@@ -26,13 +26,16 @@ const createEvaluateResponseProxy = () =>
   );
 
 /**
- * @class IsolatedWorld  
+ * @class IsolatedWorld
  * event dispatch by puppeteer will be captured by the isolated context's window, so we need to inject recorder to isolated context
  * but isolated context cannot be get directly, so we need to implement a function to get the isolated context.
  * And wrap it into a class.
  */
 export class IsolatedWorld {
-  private client: CDPSession;
+  private _client: CDPSession;
+  public get client(): CDPSession {
+    return this._client;
+  }
   // remember the context id of isolated world
   private isolatedId: Promise<number>;
   // if recorder was injected
@@ -41,7 +44,7 @@ export class IsolatedWorld {
 
   constructor(page: Page) {
     const frame = page.mainFrame();
-    this.client = frame._frameManager._client;
+    this._client = frame._frameManager._client;
     let resolver: (n: number) => void;
 
     this.isolatedId = new Promise<number>((res) => {
@@ -56,10 +59,10 @@ export class IsolatedWorld {
       const { id, name } = event.context;
       if (name === ISOLATED_WORLD_NAME) {
         resolver(id);
-        this.client.off('Runtime.executionContextCreated', handler);
+        this._client.off('Runtime.executionContextCreated', handler);
       }
     };
-    this.client.on('Runtime.executionContextCreated', handler);
+    this._client.on('Runtime.executionContextCreated', handler);
   }
 
   // inject recorder to element;
@@ -72,7 +75,7 @@ export class IsolatedWorld {
 
     try {
       const resultProxy = createEvaluateResponseProxy();
-      resultProxy.res = await this.client.send('Runtime.evaluate', {
+      resultProxy.res = await this._client.send('Runtime.evaluate', {
         expression: expression,
         contextId: id,
       });
@@ -91,7 +94,7 @@ export class IsolatedWorld {
     try {
       const resultProxy = createEvaluateResponseProxy();
 
-      resultProxy.res = await this.client.send('Runtime.evaluate', {
+      resultProxy.res = await this._client.send('Runtime.evaluate', {
         expression: `
             window['__currentStep'] = {};
             window['__finishedEvent'] = [];
@@ -114,7 +117,7 @@ export class IsolatedWorld {
     const id = await this.isolatedId;
     try {
       const resultProxy = createEvaluateResponseProxy();
-      resultProxy.res = await this.client.send('Runtime.evaluate', {
+      resultProxy.res = await this._client.send('Runtime.evaluate', {
         expression: `JSON.stringify(window['__finishedEvent'])`,
         contextId: id,
       });
@@ -131,7 +134,7 @@ export class IsolatedWorld {
     try {
       const resultProxy = createEvaluateResponseProxy();
 
-      resultProxy.res = await this.client.send('Runtime.evaluate', {
+      resultProxy.res = await this._client.send('Runtime.evaluate', {
         expression: `JSON.stringify(window['__currentStep'])`,
         contextId: id,
       });
@@ -152,7 +155,7 @@ export class IsolatedWorld {
     const id = await this.isolatedId;
     try {
       const resultProxy = createEvaluateResponseProxy();
-      resultProxy.res = await this.client.send('Runtime.evaluate', {
+      resultProxy.res = await this._client.send('Runtime.evaluate', {
         expression: `
           window['__pDate'] = Date;
           window['__fakeTime'] = 0;
@@ -185,7 +188,7 @@ export class IsolatedWorld {
     const id = await this.isolatedId;
     try {
       const resultProxy = createEvaluateResponseProxy();
-      resultProxy.res = await this.client.send('Runtime.evaluate', {
+      resultProxy.res = await this._client.send('Runtime.evaluate', {
         expression: `
         if(__pDate!==undefined){
           Date = __pDate;

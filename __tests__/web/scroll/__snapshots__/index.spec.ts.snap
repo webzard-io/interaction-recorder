@@ -1,0 +1,52 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`scroll should match drag scroll bar scroll 1`] = `
+Array [
+  Object {
+    "button": 0,
+    "buttons": 1,
+    "clientX": 95,
+    "clientY": 35,
+    "modifiers": Object {},
+    "screenX": 95,
+    "screenY": 35,
+    "timestamp": 500,
+    "type": "mousedown",
+  },
+  Object {
+    "scrollLeft": 0,
+    "scrollTop": 83,
+    "timestamp": 1000,
+    "type": "scroll",
+  },
+]
+`;
+
+exports[`scroll should match drag scroll bar scroll 2`] = `
+Object {
+  "attributes": Object {
+    "id": "container",
+  },
+  "id": Any<String>,
+  "tagName": "DIV",
+}
+`;
+
+exports[`scroll should match wheel scroll 1`] = `
+Array [
+  Object {
+    "timestamp": 1000,
+    "type": "wheel",
+  },
+]
+`;
+
+exports[`scroll should match wheel scroll 2`] = `
+Object {
+  "attributes": Object {
+    "id": "container",
+  },
+  "id": Any<String>,
+  "tagName": "DIV",
+}
+`;

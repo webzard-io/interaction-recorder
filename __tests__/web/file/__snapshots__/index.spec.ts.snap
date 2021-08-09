@@ -1,0 +1,45 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`file input should handle drop file 1`] = `
+Array [
+  Object {
+    "files": Array [
+      Object {},
+    ],
+    "timestamp": 100,
+    "type": "file",
+  },
+]
+`;
+
+exports[`file input should handle drop file 2`] = `
+Object {
+  "attributes": Object {
+    "type": "file",
+  },
+  "id": Any<String>,
+  "tagName": "INPUT",
+}
+`;
+
+exports[`file input should handle file_input 1`] = `
+Array [
+  Object {
+    "files": Array [
+      Object {},
+    ],
+    "timestamp": 100,
+    "type": "file",
+  },
+]
+`;
+
+exports[`file input should handle file_input 2`] = `
+Object {
+  "attributes": Object {
+    "type": "file",
+  },
+  "id": Any<String>,
+  "tagName": "INPUT",
+}
+`;

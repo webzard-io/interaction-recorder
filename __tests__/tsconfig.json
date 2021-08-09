@@ -10,11 +10,6 @@
       "ESNext",
       "DOM.Iterable"
     ],
-    "types": [
-      "puppeteer",
-      "jest",
-      "jest-environment-puppeteer"
-    ],
     "rootDir": "./"
   }
 }
