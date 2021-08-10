@@ -162,6 +162,7 @@ export declare type MatcherState = {
 };
 export declare type MatcherStep = Omit<Step, 'selector'> & {
     target: MatcherElement | null;
+    secondary_target: MatcherElement[];
 };
 export declare type MatcherElement = {
     id: string;

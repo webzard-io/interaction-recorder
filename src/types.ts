@@ -173,32 +173,32 @@ export type MachineWheelEvent = BaseEvent & {
   type: 'wheel';
 };
 
-export type BaseDragEvent = MachineMouseEvent & {
+export type MachineDragEvent = MachineMouseEvent & {
   targetIndex: number;
 };
 
-export type DraggingEvent = BaseDragEvent & {
+export type DraggingEvent = MachineDragEvent & {
   type: 'drag';
 };
-export type DragStartEvent = BaseDragEvent & {
+export type DragStartEvent = MachineDragEvent & {
   type: 'dragstart';
   effectAllowed: DataTransfer['effectAllowed'];
   items: Array<IDataTransferItem | undefined>;
 };
-export type DragEndEvent = BaseDragEvent & {
+export type DragEndEvent = MachineDragEvent & {
   type: 'dragend';
 };
-export type DragEnterEvent = BaseDragEvent & {
+export type DragEnterEvent = MachineDragEvent & {
   type: 'dragenter';
 };
-export type DragOverEvent = BaseDragEvent & {
+export type DragOverEvent = MachineDragEvent & {
   type: 'dragover';
   dropEffect: DataTransfer['dropEffect'];
 };
-export type DragLeaveEvent = BaseDragEvent & {
+export type DragLeaveEvent = MachineDragEvent & {
   type: 'dragleave';
 };
-export type DropEvent = BaseDragEvent & {
+export type DropEvent = MachineDragEvent & {
   type: 'drop';
   effectAllowed: DataTransfer['effectAllowed'];
   dropEffect: DataTransfer['dropEffect'];
