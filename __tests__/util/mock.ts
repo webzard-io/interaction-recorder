@@ -12,13 +12,15 @@ export const getMockedObserver = () => {
     stop: emptyFn,
     suspend: emptyFn,
     emitter: new EventEmitter2(),
-  }) as AbstractObserver;
+  }) as AbstractObserver<void, void>;
 };
 
 export const getMockedMatcher = () => {
-  return mocked<IMatcher>({
+  return mocked<IMatcher<void>>({
     start: emptyFn,
     suspend: emptyFn,
     stop: emptyFn,
+    listen: emptyFn,
+    emitter: new EventEmitter2(),
   });
 };

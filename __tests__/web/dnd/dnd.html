@@ -1,0 +1,62 @@
+<head>
+  <style>
+    .source,
+    .target {
+      border: 1px solid gray;
+      border-radius: 5%;
+      width: 150px;
+      height: 150px;
+      position: absolute;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    #s1 {
+      inset: 0;
+    }
+
+    #s2 {
+      left: 0;
+      top: 200px;
+    }
+
+    #forbidden {
+      left: 200px;
+    }
+
+    #allowed {
+      left: 200px;
+      top: 200px;
+    }
+  </style>
+</head>
+<body>
+  <div id="s1" data-color="red" draggable="true" class="source">red</div>
+  <div id="s2" data-color="green" draggable="true" class="source">green</div>
+  <div id="forbidden" class="target">forbidden</div>
+  <div id="allowed" class="target">allowed</div>
+  <script>
+    const sources = Array.from(document.getElementsByClassName('source'));
+    const [source1, source2] = sources;
+    const [forbidden, allowed] = document.getElementsByClassName('target');
+    sources.forEach((s) => {
+      s.addEventListener('dragstart', (e) => {
+        e.dataTransfer.effectAllowed = 'copy';
+        e.dataTransfer.setData('text', e.target.getAttribute('data-color'));
+        e.dataTransfer.setDragImage(e.target, 0, 0);
+      });
+    });
+    allowed.addEventListener('dragover', (e) => {
+      e.dataTransfer.dropEffect = 'copy';
+      e.preventDefault();
+    });
+    allowed.addEventListener('dragenter', (e) => {
+      e.preventDefault();
+    });
+    allowed.addEventListener('drop', (e) => {
+      e.preventDefault();
+      e.target.style.backgroundColor = e.dataTransfer.getData('text/plain');
+    });
+  </script>
+</body>

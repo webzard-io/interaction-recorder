@@ -16,9 +16,46 @@ export type InteractionRecorderOptions = {
   onUpdateStep: (step: MatcherStep) => void;
 };
 
-class ElementSerializer {
+export class ElementSerializer {
   private ElementMap = new Map<string, HTMLElement>();
   private idMap = new Map<HTMLElement, string>();
+
+  constructor() {
+    const observer = new MutationObserver((list) => {
+      const removed = new Set<HTMLElement>();
+      for (let i = 0; i < list.length; i++) {
+        const removedNodes = list[i].removedNodes;
+        for (let j = 0; j < removedNodes.length; j++) {
+          const node = removedNodes[j];
+          if (node.nodeType !== 1) {
+            continue;
+          }
+          removed.add(node as HTMLElement);
+        }
+      }
+      const toRemoved: Array<[HTMLElement, string]> = [];
+      this.ElementMap.forEach((ele, id) => {
+        for (const node of removed) {
+          if (node === ele || node.contains(ele)) {
+            toRemoved.push([ele, id]);
+            break;
+          }
+        }
+      });
+      for (let i = 0; i < toRemoved.length; i++) {
+        this.ElementMap.delete(toRemoved[i][1]);
+        this.idMap.delete(toRemoved[i][0]);
+      }
+    });
+    observer.observe(document, {
+      childList: true,
+      subtree: true,
+    });
+  }
+
+  public getElementById(id: string): HTMLElement | undefined {
+    return this.ElementMap.get(id);
+  }
 
   public getSerializedItem(
     ele: HTMLElement | Window | null,
@@ -33,20 +70,11 @@ class ElementSerializer {
       };
     } else {
       return {
-        id: this.idMap.get(ele) || randomId(),
+        id: this.getIdByElement(ele)!,
         tagName: ele.tagName,
         attributes: this.serializeAttribute(ele),
       };
     }
-  }
-
-  public getElementById(id: string): HTMLElement | undefined {
-    return this.ElementMap.get(id);
-  }
-
-  public clear() {
-    this.idMap.clear();
-    this.ElementMap.clear();
   }
 
   private serializeAttribute(ele: HTMLElement): Record<string, string> {
@@ -56,6 +84,19 @@ class ElementSerializer {
       result[attr.name] = attr.value;
     }
     return result;
+  }
+
+  public getIdByElement(element: HTMLElement | null): string | undefined {
+    if (!element) {
+      return undefined;
+    }
+    let id = this.idMap.get(element);
+    if (!id) {
+      id = randomId();
+      this.ElementMap.set(id, element);
+      this.idMap.set(element, id);
+    }
+    return id;
   }
 }
 
@@ -88,7 +129,6 @@ export class InteractionRecorder {
         onNewStep: options?.onNewStep,
         onUpdateStep: options?.onUpdateStep,
         onEndStep: (step) => {
-          this.serializer.clear();
           options?.onEndStep(step);
         },
       }),

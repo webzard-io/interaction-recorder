@@ -1,0 +1,231 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`keyboard shoud match keypress event 1`] = `
+Array [
+  Object {
+    "code": "KeyA",
+    "key": "A",
+    "keyCode": 65,
+    "modifiers": Object {},
+    "timestamp": 200,
+    "type": "keydown",
+  },
+  Object {
+    "code": "KeyA",
+    "key": "A",
+    "keyCode": 65,
+    "modifiers": Object {},
+    "timestamp": 300,
+    "type": "keypress",
+  },
+  Object {
+    "code": "KeyA",
+    "key": "A",
+    "keyCode": 65,
+    "modifiers": Object {},
+    "timestamp": 400,
+    "type": "keyup",
+  },
+]
+`;
+
+exports[`keyboard shoud match keypress event 2`] = `
+Object {
+  "attributes": Object {},
+  "id": Any<String>,
+  "tagName": "BODY",
+}
+`;
+
+exports[`keyboard should match texting event 1`] = `
+Array [
+  Object {
+    "code": "Digit1",
+    "key": "1",
+    "keyCode": 49,
+    "modifiers": Object {},
+    "timestamp": 100,
+    "type": "keydown",
+  },
+  Object {
+    "code": "Digit1",
+    "key": "1",
+    "keyCode": 49,
+    "modifiers": Object {},
+    "timestamp": 200,
+    "type": "keypress",
+  },
+  Object {
+    "data": "1",
+    "timestamp": 300,
+    "type": "text_input",
+    "value": "",
+  },
+  Object {
+    "timestamp": 400,
+    "type": "text_change",
+    "value": "1",
+  },
+  Object {
+    "code": "Digit1",
+    "key": "1",
+    "keyCode": 49,
+    "modifiers": Object {},
+    "timestamp": 500,
+    "type": "keyup",
+  },
+  Object {
+    "code": "Digit2",
+    "key": "2",
+    "keyCode": 50,
+    "modifiers": Object {},
+    "timestamp": 600,
+    "type": "keydown",
+  },
+  Object {
+    "code": "Digit2",
+    "key": "2",
+    "keyCode": 50,
+    "modifiers": Object {},
+    "timestamp": 700,
+    "type": "keypress",
+  },
+  Object {
+    "data": "2",
+    "timestamp": 800,
+    "type": "text_input",
+    "value": "",
+  },
+  Object {
+    "timestamp": 900,
+    "type": "text_change",
+    "value": "12",
+  },
+  Object {
+    "code": "Digit2",
+    "key": "2",
+    "keyCode": 50,
+    "modifiers": Object {},
+    "timestamp": 1000,
+    "type": "keyup",
+  },
+  Object {
+    "code": "Digit3",
+    "key": "3",
+    "keyCode": 51,
+    "modifiers": Object {},
+    "timestamp": 1100,
+    "type": "keydown",
+  },
+  Object {
+    "code": "Digit3",
+    "key": "3",
+    "keyCode": 51,
+    "modifiers": Object {},
+    "timestamp": 1200,
+    "type": "keypress",
+  },
+  Object {
+    "data": "3",
+    "timestamp": 1300,
+    "type": "text_input",
+    "value": "",
+  },
+  Object {
+    "timestamp": 1400,
+    "type": "text_change",
+    "value": "123",
+  },
+  Object {
+    "code": "Digit3",
+    "key": "3",
+    "keyCode": 51,
+    "modifiers": Object {},
+    "timestamp": 1500,
+    "type": "keyup",
+  },
+  Object {
+    "code": "Digit4",
+    "key": "4",
+    "keyCode": 52,
+    "modifiers": Object {},
+    "timestamp": 1600,
+    "type": "keydown",
+  },
+  Object {
+    "code": "Digit4",
+    "key": "4",
+    "keyCode": 52,
+    "modifiers": Object {},
+    "timestamp": 1700,
+    "type": "keypress",
+  },
+  Object {
+    "data": "4",
+    "timestamp": 1800,
+    "type": "text_input",
+    "value": "",
+  },
+  Object {
+    "timestamp": 1900,
+    "type": "text_change",
+    "value": "1234",
+  },
+  Object {
+    "code": "Digit4",
+    "key": "4",
+    "keyCode": 52,
+    "modifiers": Object {},
+    "timestamp": 2000,
+    "type": "keyup",
+  },
+  Object {
+    "code": "Digit5",
+    "key": "5",
+    "keyCode": 53,
+    "modifiers": Object {},
+    "timestamp": 2100,
+    "type": "keydown",
+  },
+  Object {
+    "code": "Digit5",
+    "key": "5",
+    "keyCode": 53,
+    "modifiers": Object {},
+    "timestamp": 2200,
+    "type": "keypress",
+  },
+  Object {
+    "data": "5",
+    "timestamp": 2300,
+    "type": "text_input",
+    "value": "",
+  },
+  Object {
+    "timestamp": 2400,
+    "type": "text_change",
+    "value": "12345",
+  },
+  Object {
+    "code": "Digit5",
+    "key": "5",
+    "keyCode": 53,
+    "modifiers": Object {},
+    "timestamp": 2500,
+    "type": "keyup",
+  },
+]
+`;
+
+exports[`keyboard should match texting event 2`] = `
+Object {
+  "attributes": Object {
+    "autofocus": "",
+    "id": "input",
+    "size": "80",
+    "type": "text",
+  },
+  "id": Any<String>,
+  "tagName": "INPUT",
+}
+`;
