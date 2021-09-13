@@ -33,6 +33,10 @@ const isSameTarget = (
   return !!ele1 && !!ele2 && ele1.id === ele2.id;
 };
 
+const needRecordTargetIndex = (event: MatcherEvent) => {
+  return ['dragend', 'dragenter', 'dragover', 'drop'].includes(event.type);
+};
+
 export class MatcherMachine {
   private _machine: StateMachine<
     MatcherContext,
@@ -452,6 +456,7 @@ export class MatcherMachine {
                   event,
                 ) as MatcherStep['type'],
                 events: [event.data],
+                secondary_target: [],
               };
               this.emit('new', newStep);
               return newStep;
@@ -469,7 +474,29 @@ export class MatcherMachine {
                   event,
                 ) as MatcherStep['type'],
               };
+              /**
+               * if need record targetindex
+               * and need need record target index
+               */
+              if ('targetIndex' in event.data && needRecordTargetIndex(event)) {
+                if (
+                  isSameTarget(
+                    newStep.secondary_target[
+                      newStep.secondary_target.length - 1
+                    ],
+                    event.target,
+                  )
+                ) {
+                  // if it share the same target as the last secondary_target, not increasing it;
+                  event.data.targetIndex = newStep.secondary_target.length;
+                } else {
+                  console.log('new index', event);
+                  newStep.secondary_target.push(event.target!);
+                  event.data.targetIndex = newStep.secondary_target.length + 1;
+                }
+              }
               newStep.events.push(event.data);
+
               this.emit('update', newStep);
               return newStep;
             },

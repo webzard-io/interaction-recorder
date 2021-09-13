@@ -508,7 +508,7 @@ export class EventObserver<TOutput> extends AbstractObserver<
             modifiers: toModifiers(event),
             targetIndex: 0,
           },
-          [null],
+          [event.target],
           true,
         );
         this.previousDragOverTarget = event.target;
@@ -591,7 +591,7 @@ export class EventObserver<TOutput> extends AbstractObserver<
             modifiers: toModifiers(event),
             targetIndex: 0,
           },
-          [null],
+          [event.target],
           true,
         );
       };

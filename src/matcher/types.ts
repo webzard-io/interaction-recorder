@@ -142,7 +142,10 @@ export type MatcherState =
     };
 
 export type MatcherStep = Omit<Step, 'selector'> & {
+  // main target, usually the only event target of interaction
   target: MatcherElement | null;
+  // secondary target, like drop source;
+  secondary_target: MatcherElement[];
 };
 
 export type MatcherElement = {

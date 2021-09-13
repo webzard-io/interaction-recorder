@@ -100,31 +100,31 @@ export declare type HoverEvent = BaseEvent & {
 export declare type MachineWheelEvent = BaseEvent & {
     type: 'wheel';
 };
-export declare type BaseDragEvent = MachineMouseEvent & {
+export declare type MachineDragEvent = MachineMouseEvent & {
     targetIndex: number;
 };
-export declare type DraggingEvent = BaseDragEvent & {
+export declare type DraggingEvent = MachineDragEvent & {
     type: 'drag';
 };
-export declare type DragStartEvent = BaseDragEvent & {
+export declare type DragStartEvent = MachineDragEvent & {
     type: 'dragstart';
     effectAllowed: DataTransfer['effectAllowed'];
     items: Array<IDataTransferItem | undefined>;
 };
-export declare type DragEndEvent = BaseDragEvent & {
+export declare type DragEndEvent = MachineDragEvent & {
     type: 'dragend';
 };
-export declare type DragEnterEvent = BaseDragEvent & {
+export declare type DragEnterEvent = MachineDragEvent & {
     type: 'dragenter';
 };
-export declare type DragOverEvent = BaseDragEvent & {
+export declare type DragOverEvent = MachineDragEvent & {
     type: 'dragover';
     dropEffect: DataTransfer['dropEffect'];
 };
-export declare type DragLeaveEvent = BaseDragEvent & {
+export declare type DragLeaveEvent = MachineDragEvent & {
     type: 'dragleave';
 };
-export declare type DropEvent = BaseDragEvent & {
+export declare type DropEvent = MachineDragEvent & {
     type: 'drop';
     effectAllowed: DataTransfer['effectAllowed'];
     dropEffect: DataTransfer['dropEffect'];
