@@ -26,6 +26,8 @@ import {
   TextInputEvent,
   Step,
   StepEvent,
+  MachineLoadEvent,
+  MachineResizeEvent,
 } from '../types';
 
 export interface MatcherContext {
@@ -71,6 +73,7 @@ export type MatcherEvent =
       target: MatcherElement | null;
     }
   | { type: 'blur'; data: BlurEvent; target: MatcherElement | null }
+  | { type: 'load'; data: MachineLoadEvent; target: MatcherElement | null }
   | {
       type: 'before_unload';
       data: MachineBeforeUnloadEvent;
@@ -85,7 +88,8 @@ export type MatcherEvent =
   | { type: 'dragover'; data: DragOverEvent; target: MatcherElement | null }
   | { type: 'dragleave'; data: DragLeaveEvent; target: MatcherElement | null }
   | { type: 'drop'; data: DropEvent; target: MatcherElement | null }
-  | { type: 'file'; data: BrowseFileEvent; target: MatcherElement | null };
+  | { type: 'file'; data: BrowseFileEvent; target: MatcherElement | null }
+  | { type: 'resize'; data: MachineResizeEvent; target: MatcherElement | null };
 
 export type MatcherState =
   | {

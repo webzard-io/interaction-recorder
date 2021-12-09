@@ -66,11 +66,10 @@ export class MachineMatcher implements IMatcher<MachineMatcherInput> {
   }
 
   public listen(input: MachineMatcherInput) {
-    arguments.callee;
     const { event, element: target } = input;
     this.machine.send({
-      type: event.type,
-      // TODO: remove as any, add key-value map for type and data;
+      // seems like a ts bug, a union type over 20 type in it, it will not handle equality to another same union type
+      type: event.type as any,
       data: event as any,
       target,
     });
