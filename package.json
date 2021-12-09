@@ -1,6 +1,6 @@
 {
   "name": "interaction-recorder",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "record user interactions in the browser",
   "main": "build/index.js",
   "scripts": {

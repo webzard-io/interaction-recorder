@@ -23,6 +23,7 @@ import {
   MatcherStep,
   MatcherElement,
 } from './types';
+import { MachineBeforeUnloadEvent } from '../types';
 
 const dblclickMaxGap = 350;
 
@@ -152,6 +153,18 @@ export class MatcherMachine {
           },
           hover: {
             target: 'HOVER',
+            actions: ['emitStep', 'newStep'],
+          },
+          dragenter: {
+            target: 'DRAG',
+            actions: ['emitStep', 'newStep'],
+          },
+          before_unload: {
+            target: 'NAVIGATION',
+            actions: ['emitStep', 'newStep'],
+          },
+          resize: {
+            target: 'RESIZE',
             actions: ['emitStep', 'newStep'],
           },
           '*': {
@@ -401,7 +414,29 @@ export class MatcherMachine {
             },
           },
           DROP_FILE: {},
-          NAVIGATION: {},
+          NAVIGATION: {
+            on: {
+              load: [
+                {
+                  actions: 'mergeStep',
+                  target: 'REFRESH',
+                  cond: ({ currentStep }, event) => {
+                    return (
+                      event.data.url ===
+                      (
+                        currentStep?.events[
+                          currentStep.events.length - 1
+                        ] as MachineBeforeUnloadEvent
+                      ).url
+                    );
+                  },
+                },
+                {
+                  actions: 'mergeStep',
+                },
+              ],
+            },
+          },
           SCROLL: {
             on: {
               scroll: [

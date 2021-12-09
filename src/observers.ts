@@ -378,6 +378,7 @@ export class EventObserver<TOutput> extends AbstractObserver<
         {
           type: 'before_unload',
           timestamp: this.now,
+          url: location.href,
         },
         [null],
       );

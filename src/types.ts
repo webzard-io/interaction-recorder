@@ -37,6 +37,7 @@ export type StepEvent =
   | TextChangeEvent
   | KeyupEvent
   | BlurEvent
+  | MachineLoadEvent
   | MachineBeforeUnloadEvent
   | HoverEvent
   | MachineWheelEvent
@@ -47,7 +48,8 @@ export type StepEvent =
   | DragEnterEvent
   | DragOverEvent
   | DragLeaveEvent
-  | BrowseFileEvent;
+  | BrowseFileEvent
+  | MachineResizeEvent;
 
 export type Modifiers = {
   // only record modifers when needed
@@ -154,13 +156,20 @@ export type TextChangeEvent = BaseEvent & {
   type: 'text_change';
   value: string;
 };
-//#region textinput
-export type BlurEvent = BaseEvent & {
-  type: 'blur';
+//#endregion textinput
+
+export type MachineLoadEvent = BaseEvent & {
+  type: 'load';
+  url: string;
 };
 
 export type MachineBeforeUnloadEvent = BaseEvent & {
   type: 'before_unload';
+  url: string;
+};
+
+export type BlurEvent = BaseEvent & {
+  type: 'blur';
 };
 
 export type HoverEvent = BaseEvent & {
@@ -177,6 +186,7 @@ export type MachineDragEvent = MachineMouseEvent & {
   targetIndex: number;
 };
 
+//#region drag
 export type DraggingEvent = MachineDragEvent & {
   type: 'drag';
 };
@@ -204,8 +214,15 @@ export type DropEvent = MachineDragEvent & {
   dropEffect: DataTransfer['dropEffect'];
   items: Array<IDataTransferItem | undefined>;
 };
+//#endregion drag
 
 export type BrowseFileEvent = BaseEvent & {
   type: 'file';
   files: Array<File>;
+};
+
+export type MachineResizeEvent = BaseEvent & {
+  type: 'resize';
+  x: number;
+  y: number;
 };
