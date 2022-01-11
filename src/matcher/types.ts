@@ -1,38 +1,40 @@
 import { StateSchema } from 'xstate';
 import {
-  AuxClickEvent,
-  MachineBeforeUnloadEvent,
-  MachineWheelEvent,
-  BlurEvent,
-  BrowseFileEvent,
-  ClickEvent,
-  DblClickEvent,
-  DragEndEvent,
-  DragEnterEvent,
-  DraggingEvent,
-  DragLeaveEvent,
-  DragOverEvent,
-  DragStartEvent,
-  DropEvent,
-  HoverEvent,
-  KeydownEvent,
-  KeypressEvent,
-  KeyupEvent,
-  MousedownEvent,
-  MousemoveEvent,
-  MouseupEvent,
-  ScrollEvent,
-  TextChangeEvent,
-  TextInputEvent,
+  BaseAuxClickEvent,
+  BaseBeforeUnloadEvent,
+  BaseWheelEvent,
+  BaseBlurEvent,
+  BaseBrowseFileEvent,
+  BaseClickEvent,
+  BaseDblClickEvent,
+  BaseDragEndEvent,
+  BaseDragEnterEvent,
+  BaseDragLeaveEvent,
+  BaseDragOverEvent,
+  BaseDragStartEvent,
+  BaseDropEvent,
+  BaseHoverEvent,
+  BaseKeydownEvent,
+  BaseKeypressEvent,
+  BaseKeyupEvent,
+  BaseMousedownEvent,
+  BaseMousemoveEvent,
+  BaseMouseupEvent,
+  BaseScrollEvent,
+  BaseTextChangeEvent,
+  BaseTextInputEvent,
   Step,
-  StepEvent,
-  MachineLoadEvent,
-  MachineResizeEvent,
+  BaseStepEvent,
+  BaseLoadEvent,
+  BaseResizeEvent,
+  BaseDragEvent,
 } from '../types';
 
-export interface MatcherContext {
-  currentStep?: MatcherStep;
-  previousStep?: MatcherStep;
+export interface MatcherContext<
+  TStepEvent extends BaseStepEvent = BaseStepEvent,
+> {
+  currentStep?: MatcherStep<TStepEvent>;
+  previousStep?: MatcherStep<TStepEvent>;
 }
 /* eslint-disable @typescript-eslint/ban-types */
 export interface MatcherSchema extends StateSchema {
@@ -56,101 +58,134 @@ export interface MatcherSchema extends StateSchema {
 }
 /* eslint-enable @typescript-eslint/ban-types */
 export type MatcherEvent =
-  | { type: 'mousedown'; data: MousedownEvent; target: MatcherElement | null }
-  | { type: 'mouseup'; data: MouseupEvent; target: MatcherElement | null }
-  | { type: 'click'; data: ClickEvent; target: MatcherElement | null }
-  | { type: 'dblclick'; data: DblClickEvent; target: MatcherElement | null }
-  | { type: 'auxclick'; data: AuxClickEvent; target: MatcherElement | null }
-  | { type: 'mousemove'; data: MousemoveEvent; target: MatcherElement | null }
-  | { type: 'scroll'; data: ScrollEvent; target: MatcherElement | null }
-  | { type: 'keydown'; data: KeydownEvent; target: MatcherElement | null }
-  | { type: 'keypress'; data: KeypressEvent; target: MatcherElement | null }
-  | { type: 'keyup'; data: KeyupEvent; target: MatcherElement | null }
-  | { type: 'text_input'; data: TextInputEvent; target: MatcherElement | null }
+  | {
+      type: 'mousedown';
+      data: BaseMousedownEvent;
+      target: MatcherElement | null;
+    }
+  | { type: 'mouseup'; data: BaseMouseupEvent; target: MatcherElement | null }
+  | { type: 'click'; data: BaseClickEvent; target: MatcherElement | null }
+  | { type: 'dblclick'; data: BaseDblClickEvent; target: MatcherElement | null }
+  | { type: 'auxclick'; data: BaseAuxClickEvent; target: MatcherElement | null }
+  | {
+      type: 'mousemove';
+      data: BaseMousemoveEvent;
+      target: MatcherElement | null;
+    }
+  | { type: 'scroll'; data: BaseScrollEvent; target: MatcherElement | null }
+  | { type: 'keydown'; data: BaseKeydownEvent; target: MatcherElement | null }
+  | { type: 'keypress'; data: BaseKeypressEvent; target: MatcherElement | null }
+  | { type: 'keyup'; data: BaseKeyupEvent; target: MatcherElement | null }
+  | {
+      type: 'text_input';
+      data: BaseTextInputEvent;
+      target: MatcherElement | null;
+    }
   | {
       type: 'text_change';
-      data: TextChangeEvent;
+      data: BaseTextChangeEvent;
       target: MatcherElement | null;
     }
-  | { type: 'blur'; data: BlurEvent; target: MatcherElement | null }
-  | { type: 'load'; data: MachineLoadEvent; target: MatcherElement | null }
+  | { type: 'blur'; data: BaseBlurEvent; target: MatcherElement | null }
+  | { type: 'load'; data: BaseLoadEvent; target: MatcherElement | null }
   | {
       type: 'before_unload';
-      data: MachineBeforeUnloadEvent;
+      data: BaseBeforeUnloadEvent;
       target: MatcherElement | null;
     }
-  | { type: 'hover'; data: HoverEvent; target: MatcherElement | null }
-  | { type: 'wheel'; data: MachineWheelEvent; target: MatcherElement | null }
-  | { type: 'drag'; data: DraggingEvent; target: MatcherElement | null }
-  | { type: 'dragstart'; data: DragStartEvent; target: MatcherElement | null }
-  | { type: 'dragend'; data: DragEndEvent; target: MatcherElement | null }
-  | { type: 'dragenter'; data: DragEnterEvent; target: MatcherElement | null }
-  | { type: 'dragover'; data: DragOverEvent; target: MatcherElement | null }
-  | { type: 'dragleave'; data: DragLeaveEvent; target: MatcherElement | null }
-  | { type: 'drop'; data: DropEvent; target: MatcherElement | null }
-  | { type: 'file'; data: BrowseFileEvent; target: MatcherElement | null }
-  | { type: 'resize'; data: MachineResizeEvent; target: MatcherElement | null };
+  | { type: 'hover'; data: BaseHoverEvent; target: MatcherElement | null }
+  | { type: 'wheel'; data: BaseWheelEvent; target: MatcherElement | null }
+  | { type: 'drag'; data: BaseDragEvent; target: MatcherElement | null }
+  | {
+      type: 'dragstart';
+      data: BaseDragStartEvent<unknown>;
+      target: MatcherElement | null;
+    }
+  | { type: 'dragend'; data: BaseDragEndEvent; target: MatcherElement | null }
+  | {
+      type: 'dragenter';
+      data: BaseDragEnterEvent;
+      target: MatcherElement | null;
+    }
+  | { type: 'dragover'; data: BaseDragOverEvent; target: MatcherElement | null }
+  | {
+      type: 'dragleave';
+      data: BaseDragLeaveEvent;
+      target: MatcherElement | null;
+    }
+  | {
+      type: 'drop';
+      data: BaseDropEvent<unknown>;
+      target: MatcherElement | null;
+    }
+  | {
+      type: 'file';
+      data: BaseBrowseFileEvent<unknown>;
+      target: MatcherElement | null;
+    }
+  | { type: 'resize'; data: BaseResizeEvent; target: MatcherElement | null };
 
-export type MatcherState =
+export type MatcherState<TStepEvent extends BaseStepEvent = BaseStepEvent> =
   | {
       value: 'INIT';
-      context: MatcherContext;
+      context: MatcherContext<TStepEvent>;
     }
   | {
       value: 'CLICK';
-      context: MatcherContext;
+      context: MatcherContext<TStepEvent>;
     }
   | {
       value: 'RIGHT_CLICK';
-      context: MatcherContext;
+      context: MatcherContext<TStepEvent>;
     }
   | {
       value: 'DBLCLICK';
-      context: MatcherContext;
+      context: MatcherContext<TStepEvent>;
     }
   | {
       value: 'DRAG';
-      context: MatcherContext;
+      context: MatcherContext<TStepEvent>;
     }
   | {
       value: 'KEYPRESS';
-      context: MatcherContext;
+      context: MatcherContext<TStepEvent>;
     }
   | {
       value: 'TEXT';
-      context: MatcherContext;
+      context: MatcherContext<TStepEvent>;
     }
   | {
       value: 'BROWSE_FILE';
-      context: MatcherContext;
+      context: MatcherContext<TStepEvent>;
     }
   | {
       value: 'NAVIGATION';
-      context: MatcherContext;
+      context: MatcherContext<TStepEvent>;
     }
   | {
       value: 'SCROLL';
-      context: MatcherContext;
+      context: MatcherContext<TStepEvent>;
     }
   | {
       value: 'REFRESH';
-      context: MatcherContext;
+      context: MatcherContext<TStepEvent>;
     }
   | {
       value: 'RESIZE';
-      context: MatcherContext;
+      context: MatcherContext<TStepEvent>;
     }
   | {
       value: 'UNKNOWN';
-      context: MatcherContext;
+      context: MatcherContext<TStepEvent>;
     };
 
-export type MatcherStep = Omit<Step, 'selector'> & {
-  // main target, usually the only event target of interaction
-  target: MatcherElement | null;
-  // secondary target, like drop source;
-  secondary_target: MatcherElement[];
-};
+export type MatcherStep<TStepEvent extends BaseStepEvent = BaseStepEvent> =
+  Omit<Step<TStepEvent>, 'selector'> & {
+    // main target, usually the only event target of interaction
+    target: MatcherElement | null;
+    // secondary target, like drop source;
+    secondary_target: MatcherElement[];
+  };
 
 export type MatcherElement = {
   id: string;
@@ -158,11 +193,14 @@ export type MatcherElement = {
   attributes: Record<string, string>;
 };
 
-export type MachineMatcherInput = {
+export type MachineMatcherInput<TStepEvent extends BaseStepEvent> = {
   element: MatcherElement | null;
-  event: StepEvent;
+  event: TStepEvent;
 };
 
 export type emitType = 'new' | 'end' | 'update';
 
-export type emitFn = (type: emitType, step: MatcherStep) => void;
+export type emitFn<TStepEvent extends BaseStepEvent> = (
+  type: emitType,
+  step: MatcherStep<TStepEvent>,
+) => void;
