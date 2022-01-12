@@ -1,6 +1,6 @@
 import { EventEmitter2 } from 'eventemitter2';
-import { AbstractObserver, EventProcessor } from '.';
-import { EventObserverStepEvent } from './type';
+import { AbstractObserver } from './abstractObserver';
+import { EventObserverStepEvent, EventProcessor } from './type';
 export declare class EventObserver<TOutput> extends AbstractObserver<EventObserverStepEvent, TOutput> {
     name: string;
     emitter: EventEmitter2;

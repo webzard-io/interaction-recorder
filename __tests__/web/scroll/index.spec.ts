@@ -26,7 +26,10 @@ describe('scroll', () => {
     await page.waitForTimeout(500);
 
     const curr = await isolatedWorld.retrieveCurrentEvent();
-    expect(curr.events).toMatchSnapshot();
+    expect(curr.events[0].type).toBe('wheel');
+    expect(
+      curr.events.slice(1).every((e: { type: string }) => e.type === 'scroll'),
+    ).toBeTruthy();
     expect(curr.target).toMatchSnapshot({
       id: expect.any(String),
     });
@@ -36,13 +39,12 @@ describe('scroll', () => {
   it('should match drag scroll bar scroll', async () => {
     await isolatedWorld.useFakeDateTime(100);
     // mock interaction dragging scroll bar
-    await page.mouse.move(95, 35);
+    await page.mouse.move(495, 150);
     await page.mouse.down();
-    await page.mouse.move(95, 60);
+    await page.mouse.move(495, 300);
     await page.mouse.up();
     // wait for throttle
     await page.waitForTimeout(500);
-
     const curr = await isolatedWorld.retrieveCurrentEvent();
     expect(curr.events).toMatchSnapshot();
     expect(curr.target).toMatchSnapshot({

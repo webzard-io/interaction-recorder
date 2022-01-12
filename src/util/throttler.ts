@@ -7,6 +7,7 @@ export interface IThrottler {
   invoker: (() => void) | null;
   timeout: number | null;
   previous: number;
+  key: symbol;
 }
 
 export class ThrottleManager {
@@ -32,6 +33,7 @@ export class ThrottleManager {
           invoker: null,
           timeout: null,
           previous: 0,
+          key,
         };
         manager.throttlerMap.set(key, newThrottler);
       }
@@ -51,6 +53,7 @@ export class ThrottleManager {
         throttler.previous = now;
         func.apply(this, args);
         manager.pendingFnSet.delete(throttler.invoker);
+        manager.throttlerMap.delete(throttler.key);
         throttler.invoker = null;
       } else if (!throttler.timeout && options.trailing !== false) {
         const debouncedFn = () => {
@@ -59,6 +62,7 @@ export class ThrottleManager {
           throttler.timeout = null;
           func.apply(this, args);
           manager.pendingFnSet.delete(throttler.invoker);
+          manager.throttlerMap.delete(throttler.key);
           throttler.invoker = null;
         };
         throttler.timeout = window.setTimeout(debouncedFn, remaining);

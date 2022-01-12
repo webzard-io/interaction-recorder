@@ -455,7 +455,7 @@ export class MatcherMachine<TStepEvent extends BaseStepEvent = BaseStepEvent> {
                 {
                   actions: 'mergeStep',
                   cond: ({ currentStep }, { target }) =>
-                    !isSameTarget(currentStep?.target, target),
+                    isSameTarget(currentStep?.target, target),
                 },
                 {
                   // ignore non same target scroll event.
@@ -472,7 +472,9 @@ export class MatcherMachine<TStepEvent extends BaseStepEvent = BaseStepEvent> {
                   actions: [],
                 },
               ],
-              mouseup: {},
+              mouseup: {
+                actions: 'mergeStep',
+              },
               click: {},
             },
           },
@@ -514,12 +516,13 @@ export class MatcherMachine<TStepEvent extends BaseStepEvent = BaseStepEvent> {
               if (!context.currentStep || !state) {
                 return context.currentStep;
               }
+              const type = this.getTargetStateNode(state, event);
               const newStep = {
                 ...context.currentStep,
-                type: this.getTargetStateNode(
-                  state,
-                  event,
-                ) as MatcherStep['type'],
+                type:
+                  type === 'INIT'
+                    ? context.currentStep.type
+                    : (type as MatcherStep['type']),
               };
               /**
                * if need record targetindex

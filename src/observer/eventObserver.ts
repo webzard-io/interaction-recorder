@@ -1,10 +1,10 @@
 import { EventEmitter2 } from 'eventemitter2';
-import { AbstractObserver, EventProcessor } from '.';
-import { MousemoveRecord } from '..';
+import { AbstractObserver } from './abstractObserver';
+import { MousemoveRecord } from '../types';
 import { isInputLikeElement } from '../util/fn';
 import { getSerializedDataTransferItemList } from '../util/entry-reader';
 import { ResetHandler, toModifiers, on } from '../util/fn';
-import { EventObserverStepEvent } from './type';
+import { EventObserverStepEvent, EventProcessor } from './type';
 
 export class EventObserver<TOutput> extends AbstractObserver<
   EventObserverStepEvent,

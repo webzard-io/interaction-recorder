@@ -1,3 +1,4 @@
+import { EventEmitter2 } from 'eventemitter2';
 import {
   BaseBlurEvent,
   BaseClickEvent,
@@ -145,3 +146,26 @@ export type EventObserverStepEvent =
   | ObserverDropEvent
   | ObserverBrowseFileEvent
   | ObserverResizeEvent;
+
+declare global {
+  interface UIEvent {
+    path: Array<HTMLElement>;
+  }
+}
+
+export interface IObserver<TOutput> {
+  name: string;
+  emitter: EventEmitter2;
+  start(): void;
+  stop(): void;
+  suspend(): void;
+  on(listenerFn: ObserverListener<TOutput>): ObserverListener<TOutput>;
+  off(listenerFn: ObserverListener<TOutput>): void;
+}
+
+export type ObserverListener<TOutput> = (output: TOutput) => void;
+
+export type EventProcessor<TEvent, TOutput> = (
+  event: TEvent,
+  ...args: any[]
+) => TOutput;

@@ -4,6 +4,6 @@ module.exports = {
     product: 'chrome',
     devtools: false,
     // we need to ignore this flag to controll scrollbar by page.mouse in headless mode
-    ignoreDefaultArgs: ["--hide-scrollbars"],
+    ignoreDefaultArgs: ['--hide-scrollbars'],
   },
-}
+};

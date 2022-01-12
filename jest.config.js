@@ -6,12 +6,12 @@ const config = {
     '.ts': 'ts-jest',
   },
   globals: {
-    "ts-jest": {
+    'ts-jest': {
       diagnostics: false,
-      tsconfig: './__tests__/tsconfig.json'
-    }
+      tsconfig: './__tests__/tsconfig.json',
+    },
   },
-  setupFilesAfterEnv: ["jest-extended"],
+  setupFilesAfterEnv: ['jest-extended'],
   moduleFileExtensions: ['ts', 'js'],
   testMatch: ['<rootDir>/__tests__/**/**.spec.ts'],
   testPathIgnorePatterns: ['/node_modules/', '/build/', '<rootDir>/build/'],
@@ -19,5 +19,6 @@ const config = {
   coverageReporters: ['text-summary', 'lcov'],
   collectCoverage: Boolean(process.env.COVERAGE),
   coverageDirectory: './__tests__/coverage',
+  testTimeout: 10000000,
 };
-module.exports = config
+module.exports = config;

@@ -1,3 +1,4 @@
+import { EventEmitter2 } from 'eventemitter2';
 import { BaseBlurEvent, BaseClickEvent, BaseDblClickEvent, BaseDragEvent, BaseKeydownEvent, BaseMousemoveEvent, BaseTextChangeEvent, BaseTextInputEvent, BaseWheelEvent, BaseAuxClickEvent, BaseBeforeUnloadEvent, BaseDragStartEvent, BaseHoverEvent, BaseKeyboardEvent, BaseKeyupEvent, BaseLoadEvent, BaseMousedownEvent, BaseMouseupEvent, BaseScrollEvent, BaseBrowseFileEvent, BaseDragEndEvent, BaseDragEnterEvent, BaseDragLeaveEvent, BaseDragOverEvent, BaseDropEvent, BaseResizeEvent, Modifiers } from '../types';
 interface ExtraMouseEventInit {
     screenX: number;
@@ -60,4 +61,20 @@ export interface ObserverDropEvent extends BaseDropEvent<File>, ExtraMouseEventI
 export declare type ObserverBrowseFileEvent = BaseBrowseFileEvent<File>;
 export declare type ObserverResizeEvent = BaseResizeEvent;
 export declare type EventObserverStepEvent = ObserverMousedownEvent | ObserverMouseupEvent | ObserverClickEvent | ObserverAuxClickEvent | ObserverDblClickEvent | ObserverMousemoveEvent | ObserverScrollEvent | ObserverKeydownEvent | ObserverKeypressEvent | ObserverKeyupEvent | ObserverTextInputEvent | ObserverTextChangeEvent | ObserverBlurEvent | ObserverLoadEvent | ObserverBeforeUnloadEvent | ObserverHoverEvent | ObserverWheelEvent | ObserverDragEvent | ObserverDragStartEvent | ObserverDragEndEvent | ObserverDragEnterEvent | ObserverDragOverEvent | ObserverDragLeaveEvent | ObserverDropEvent | ObserverBrowseFileEvent | ObserverResizeEvent;
+declare global {
+    interface UIEvent {
+        path: Array<HTMLElement>;
+    }
+}
+export interface IObserver<TOutput> {
+    name: string;
+    emitter: EventEmitter2;
+    start(): void;
+    stop(): void;
+    suspend(): void;
+    on(listenerFn: ObserverListener<TOutput>): ObserverListener<TOutput>;
+    off(listenerFn: ObserverListener<TOutput>): void;
+}
+export declare type ObserverListener<TOutput> = (output: TOutput) => void;
+export declare type EventProcessor<TEvent, TOutput> = (event: TEvent, ...args: any[]) => TOutput;
 export {};
