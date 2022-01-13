@@ -9,6 +9,9 @@ import { EventObserver, EventObserverStepEvent } from './observer';
 import { Recorder } from './recorder';
 import { randomId } from './util/fn';
 
+// dataset key in js should be under camel case and in html it should be under kebab case with data- prefix
+const DOMID_DATASET_KEY = 'interactionRecorderDomid';
+const DOMID_DATASET_ATTR = 'data-interaction-recorder-domid';
 export type InteractionRecorderOptions = {
   onNewStep: (step: MatcherStep<EventObserverStepEvent>) => void;
   onEndStep: (step: MatcherStep<EventObserverStepEvent>) => void;
@@ -16,44 +19,10 @@ export type InteractionRecorderOptions = {
 };
 
 export class ElementSerializer {
-  private ElementMap = new Map<string, HTMLElement>();
-  private idMap = new Map<HTMLElement, string>();
-
-  constructor() {
-    const observer = new MutationObserver((list) => {
-      const removed = new Set<HTMLElement>();
-      for (let i = 0; i < list.length; i++) {
-        const removedNodes = list[i].removedNodes;
-        for (let j = 0; j < removedNodes.length; j++) {
-          const node = removedNodes[j];
-          if (node.nodeType !== 1) {
-            continue;
-          }
-          removed.add(node as HTMLElement);
-        }
-      }
-      const toRemoved: Array<[HTMLElement, string]> = [];
-      this.ElementMap.forEach((ele, id) => {
-        for (const node of removed) {
-          if (node === ele || node.contains(ele)) {
-            toRemoved.push([ele, id]);
-            break;
-          }
-        }
-      });
-      for (let i = 0; i < toRemoved.length; i++) {
-        this.ElementMap.delete(toRemoved[i][1]);
-        this.idMap.delete(toRemoved[i][0]);
-      }
-    });
-    observer.observe(document, {
-      childList: true,
-      subtree: true,
-    });
-  }
-
-  public getElementById(id: string): HTMLElement | undefined {
-    return this.ElementMap.get(id);
+  public getElementById(id: string): HTMLElement | null {
+    return document.querySelector<HTMLElement>(
+      `[${DOMID_DATASET_ATTR}="${id}"]`,
+    );
   }
 
   public getSerializedItem(
@@ -78,8 +47,8 @@ export class ElementSerializer {
 
   private serializeAttribute(ele: HTMLElement): Record<string, string> {
     const result: Record<string, string> = {};
-    for (let i = 0; i < ele.attributes.length; i++) {
-      const attr = ele.attributes[i];
+    for (const attr of ele.attributes) {
+      if (attr.name === DOMID_DATASET_ATTR) continue;
       result[attr.name] = attr.value;
     }
     return result;
@@ -89,13 +58,10 @@ export class ElementSerializer {
     if (!element) {
       return undefined;
     }
-    let id = this.idMap.get(element);
-    if (!id) {
-      id = randomId();
-      this.ElementMap.set(id, element);
-      this.idMap.set(element, id);
+    if (!element.dataset[DOMID_DATASET_KEY]) {
+      element.dataset[DOMID_DATASET_KEY] = randomId();
     }
-    return id;
+    return element.dataset[DOMID_DATASET_KEY];
   }
 }
 
