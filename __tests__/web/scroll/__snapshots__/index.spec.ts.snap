@@ -5,19 +5,30 @@ Array [
   Object {
     "button": 0,
     "buttons": 1,
-    "clientX": 95,
-    "clientY": 35,
+    "clientX": 495,
+    "clientY": 150,
     "modifiers": Object {},
-    "screenX": 95,
-    "screenY": 35,
+    "screenX": 495,
+    "screenY": 150,
     "timestamp": 500,
     "type": "mousedown",
   },
   Object {
     "scrollLeft": 0,
-    "scrollTop": 83,
+    "scrollTop": 351,
     "timestamp": 1000,
     "type": "scroll",
+  },
+  Object {
+    "button": 0,
+    "buttons": 0,
+    "clientX": 495,
+    "clientY": 300,
+    "modifiers": Object {},
+    "screenX": 495,
+    "screenY": 300,
+    "timestamp": 800,
+    "type": "mouseup",
   },
 ]
 `;
@@ -33,15 +44,6 @@ Object {
 `;
 
 exports[`scroll should match wheel scroll 1`] = `
-Array [
-  Object {
-    "timestamp": 1000,
-    "type": "wheel",
-  },
-]
-`;
-
-exports[`scroll should match wheel scroll 2`] = `
 Object {
   "attributes": Object {
     "id": "container",

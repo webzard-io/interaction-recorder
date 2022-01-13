@@ -147,15 +147,21 @@ Array [
         "screenY": 40,
         "timeOffset": 100,
       },
+    ],
+    "timestamp": 800,
+    "type": "mousemove",
+  },
+  Object {
+    "positions": Array [
       Object {
         "clientX": 80,
         "clientY": 80,
         "screenX": 80,
         "screenY": 80,
-        "timeOffset": 400,
+        "timeOffset": 100,
       },
     ],
-    "timestamp": 800,
+    "timestamp": 1200,
     "type": "mousemove",
   },
   Object {
@@ -167,15 +173,21 @@ Array [
         "screenY": 120,
         "timeOffset": 100,
       },
+    ],
+    "timestamp": 1600,
+    "type": "mousemove",
+  },
+  Object {
+    "positions": Array [
       Object {
         "clientX": 160,
         "clientY": 160,
         "screenX": 160,
         "screenY": 160,
-        "timeOffset": 400,
+        "timeOffset": 100,
       },
     ],
-    "timestamp": 1500,
+    "timestamp": 2000,
     "type": "mousemove",
   },
   Object {
@@ -187,15 +199,21 @@ Array [
         "screenY": 200,
         "timeOffset": 100,
       },
+    ],
+    "timestamp": 2400,
+    "type": "mousemove",
+  },
+  Object {
+    "positions": Array [
       Object {
         "clientX": 240,
         "clientY": 240,
         "screenX": 240,
         "screenY": 240,
-        "timeOffset": 400,
+        "timeOffset": 100,
       },
     ],
-    "timestamp": 2200,
+    "timestamp": 2800,
     "type": "mousemove",
   },
   Object {
@@ -207,15 +225,21 @@ Array [
         "screenY": 280,
         "timeOffset": 100,
       },
+    ],
+    "timestamp": 3200,
+    "type": "mousemove",
+  },
+  Object {
+    "positions": Array [
       Object {
         "clientX": 320,
         "clientY": 320,
         "screenX": 320,
         "screenY": 320,
-        "timeOffset": 400,
+        "timeOffset": 100,
       },
     ],
-    "timestamp": 2900,
+    "timestamp": 3600,
     "type": "mousemove",
   },
   Object {
@@ -227,15 +251,21 @@ Array [
         "screenY": 360,
         "timeOffset": 100,
       },
+    ],
+    "timestamp": 4000,
+    "type": "mousemove",
+  },
+  Object {
+    "positions": Array [
       Object {
         "clientX": 400,
         "clientY": 400,
         "screenX": 400,
         "screenY": 400,
-        "timeOffset": 400,
+        "timeOffset": 100,
       },
     ],
-    "timestamp": 3600,
+    "timestamp": 4400,
     "type": "mousemove",
   },
   Object {
@@ -246,7 +276,7 @@ Array [
     "modifiers": Object {},
     "screenX": 400,
     "screenY": 400,
-    "timestamp": 4200,
+    "timestamp": 4700,
     "type": "mouseup",
   },
   Object {
@@ -257,7 +287,7 @@ Array [
     "modifiers": Object {},
     "screenX": 400,
     "screenY": 400,
-    "timestamp": 4300,
+    "timestamp": 4800,
     "type": "click",
   },
 ]
