@@ -1,69 +1,13 @@
-import { StepEvent, MousemoveRecord } from './types';
-import { ThrottleManager } from './util/throttler';
 import { EventEmitter2 } from 'eventemitter2';
-import { isInputLikeElement, on, ResetHandler, toModifiers } from './util/fn';
-import { getSerializedDataTransferItemList } from './util/entry-reader';
-
-export interface IObserver<TOutput> {
-  name: string;
-  emitter: EventEmitter2;
-  start(): void;
-  stop(): void;
-  suspend(): void;
-  on(listenerFn: ObserverListener<TOutput>): ObserverListener<TOutput>;
-  off(listenerFn: ObserverListener<TOutput>): void;
-}
-
-export type ObserverListener<TOutput> = (output: TOutput) => void;
-
-export type EventProcessor<TEvent, TOutput> = (
-  event: TEvent,
-  ...args: any[]
-) => TOutput;
-
-export abstract class AbstractObserver<TEvent, TOutput>
-  implements IObserver<TOutput>
-{
-  abstract name: string;
-  abstract emitter: EventEmitter2;
-
-  abstract start(): void;
-  abstract stop(): void;
-  abstract suspend(): void;
-
-  private static throttleManager = new ThrottleManager();
-  protected preprocess: EventProcessor<TEvent, TOutput>;
-  protected getThrottler: typeof ThrottleManager.prototype.getThrottle;
-  protected invokeAll: typeof ThrottleManager.prototype.invokeAll;
-
-  constructor(preprocess: EventProcessor<TEvent, TOutput>) {
-    this.getThrottler = (...args) => {
-      return AbstractObserver.throttleManager.getThrottle(...args);
-    };
-
-    this.invokeAll = () => {
-      return AbstractObserver.throttleManager.invokeAll();
-    };
-    this.preprocess = preprocess;
-  }
-
-  protected onEmit(event: TEvent, args: any[], fromThrottler = false) {
-    !fromThrottler && AbstractObserver.throttleManager.invokeAll();
-    this.emitter.emit(`observer.${this.name}`, this.preprocess(event, ...args));
-  }
-
-  public on(listener: ObserverListener<TOutput>): ObserverListener<TOutput> {
-    this.emitter.on(`observer.${this.name}`, listener);
-    return listener;
-  }
-
-  public off(listener: ObserverListener<TOutput>): void {
-    this.emitter.off(`observer.${this.name}`, listener);
-  }
-}
+import { AbstractObserver } from './abstractObserver';
+import { MousemoveRecord } from '../types';
+import { isInputLikeElement } from '../util/fn';
+import { getSerializedDataTransferItemList } from '../util/entry-reader';
+import { ResetHandler, toModifiers, on } from '../util/fn';
+import { EventObserverStepEvent, EventProcessor } from './type';
 
 export class EventObserver<TOutput> extends AbstractObserver<
-  StepEvent,
+  EventObserverStepEvent,
   TOutput
 > {
   public name = 'Event';
@@ -77,7 +21,10 @@ export class EventObserver<TOutput> extends AbstractObserver<
 
   private previousDragOverTarget: EventTarget | null = null;
 
-  constructor(win: Window, preprocess: EventProcessor<StepEvent, TOutput>) {
+  constructor(
+    win: Window,
+    preprocess: EventProcessor<EventObserverStepEvent, TOutput>,
+  ) {
     super(preprocess);
     this.win = win;
   }

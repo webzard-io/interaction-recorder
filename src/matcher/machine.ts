@@ -23,7 +23,7 @@ import {
   MatcherStep,
   MatcherElement,
 } from './types';
-import { MachineBeforeUnloadEvent } from '../types';
+import { BaseStepEvent, BaseBeforeUnloadEvent } from '../types';
 
 const dblclickMaxGap = 350;
 
@@ -38,24 +38,29 @@ const needRecordTargetIndex = (event: MatcherEvent) => {
   return ['dragend', 'dragenter', 'dragover', 'drop'].includes(event.type);
 };
 
-export class MatcherMachine {
+export class MatcherMachine<TStepEvent extends BaseStepEvent = BaseStepEvent> {
   private _machine: StateMachine<
-    MatcherContext,
+    MatcherContext<TStepEvent>,
     MatcherSchema,
     MatcherEvent,
-    MatcherState
+    MatcherState<TStepEvent>
   >;
   private _service: Interpreter<
-    MatcherContext,
+    MatcherContext<TStepEvent>,
     MatcherSchema,
     MatcherEvent,
-    MatcherState
+    MatcherState<TStepEvent>
   >;
 
-  private emit: emitFn;
+  private emit: emitFn<TStepEvent>;
 
   private getTargetStateNode(
-    state: State<MatcherContext, MatcherEvent, MatcherSchema, MatcherState>,
+    state: State<
+      MatcherContext<TStepEvent>,
+      MatcherEvent,
+      MatcherSchema,
+      MatcherState<TStepEvent>
+    >,
     event: MatcherEvent,
   ): StateValue {
     const _state = this.machine.resolveState(state!);
@@ -82,9 +87,13 @@ export class MatcherMachine {
     return this._service;
   }
 
-  constructor(emit: emitFn) {
+  constructor(emit: emitFn<TStepEvent>) {
     this.emit = emit;
-    this._machine = Machine<MatcherContext, MatcherSchema, MatcherEvent>(
+    this._machine = Machine<
+      MatcherContext<TStepEvent>,
+      MatcherSchema,
+      MatcherEvent
+    >(
       {
         id: 'matcher',
         initial: 'INIT',
@@ -240,10 +249,13 @@ export class MatcherMachine {
                       .slice(1)
                       .every((event) => event.type === 'mousemove') &&
                     !(
-                      lastEvent.type === 'mousedown' &&
-                      event.positions.length === 1 &&
-                      event.positions[0].clientX === lastEvent.clientX &&
-                      event.positions[0].clientY === lastEvent.clientY
+                      // ignore mousemove event in drag if mouse doesn't move, it will happen when user mousedown browser when it has already been blurred
+                      (
+                        lastEvent.type === 'mousedown' &&
+                        event.positions.length === 1 &&
+                        event.positions[0].clientX === lastEvent.clientX &&
+                        event.positions[0].clientY === lastEvent.clientY
+                      )
                     )
                   );
                 },
@@ -426,7 +438,7 @@ export class MatcherMachine {
                       (
                         currentStep?.events[
                           currentStep.events.length - 1
-                        ] as MachineBeforeUnloadEvent
+                        ] as BaseBeforeUnloadEvent
                       ).url
                     );
                   },
@@ -460,7 +472,9 @@ export class MatcherMachine {
                   actions: [],
                 },
               ],
-              mouseup: {},
+              mouseup: {
+                actions: 'mergeStep',
+              },
               click: {},
             },
           },
@@ -484,13 +498,13 @@ export class MatcherMachine {
               if (!state) {
                 return context.currentStep;
               }
-              const newStep: MatcherStep = {
+              const newStep: MatcherStep<TStepEvent> = {
                 target: event.target,
                 type: this.getTargetStateNode(
                   state,
                   event,
                 ) as MatcherStep['type'],
-                events: [event.data],
+                events: [event.data as TStepEvent],
                 secondary_target: [],
               };
               this.emit('new', newStep);
@@ -525,13 +539,11 @@ export class MatcherMachine {
                   // if it share the same target as the last secondary_target, not increasing it;
                   event.data.targetIndex = newStep.secondary_target.length;
                 } else {
-                  console.log('new index', event);
                   newStep.secondary_target.push(event.target!);
                   event.data.targetIndex = newStep.secondary_target.length + 1;
                 }
               }
-              newStep.events.push(event.data);
-
+              newStep.events.push(event.data as TStepEvent);
               this.emit('update', newStep);
               return newStep;
             },

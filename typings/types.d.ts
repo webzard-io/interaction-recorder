@@ -6,12 +6,12 @@ export declare enum MatcherKey {
     EMIT_UPDATE_STEP = "matcher.step_event.update",
     EMIT_END_STEP = "matcher.step_event.end"
 }
-export declare type Step = {
+export declare type Step<TEvent extends BaseStepEvent> = {
     selector: IMeta;
     type: 'CLICK' | 'RIGHT_CLICK' | 'DBLCLICK' | 'DRAG' | 'KEYPRESS' | 'TEXT' | 'BROWSE_FILE' | 'DROP_FILE' | 'NAVIGATION' | 'SCROLL' | 'REFRESH' | 'RESIZE' | 'HOVER' | 'UNKNOWN';
-    events: StepEvent[];
+    events: TEvent[];
 };
-export declare type StepEvent = MouseEvents | ScrollEvent | KeydownEvent | KeypressEvent | TextInputEvent | TextChangeEvent | KeyupEvent | BlurEvent | MachineBeforeUnloadEvent | HoverEvent | MachineWheelEvent | DraggingEvent | DropEvent | DragStartEvent | DragEndEvent | DragEnterEvent | DragOverEvent | DragLeaveEvent | BrowseFileEvent;
+export declare type BaseStepEvent = BaseMousedownEvent | BaseMouseupEvent | BaseClickEvent | BaseAuxClickEvent | BaseDblClickEvent | BaseMousemoveEvent | BaseScrollEvent | BaseKeydownEvent | BaseKeypressEvent | BaseKeyupEvent | BaseTextInputEvent | BaseTextChangeEvent | BaseBlurEvent | BaseLoadEvent | BaseBeforeUnloadEvent | BaseHoverEvent | BaseWheelEvent | BaseDragEvent | BaseDropEvent<unknown> | BaseDragStartEvent<unknown> | BaseDragEndEvent | BaseDragEnterEvent | BaseDragOverEvent | BaseDragLeaveEvent | BaseBrowseFileEvent<unknown> | BaseResizeEvent;
 export declare type Modifiers = {
     ctrlKey?: true;
     altKey?: true;
@@ -25,113 +25,120 @@ export declare type MousemoveRecord = {
     screenY: number;
     timeOffset: number;
 };
-declare type BaseEvent = {
+interface BaseEvent {
+    type: 'mousedown' | 'mouseup' | 'mousemove' | 'click' | 'dblclick' | 'auxclick' | 'scroll' | 'keydown' | 'keypress' | 'keyup' | 'text_input' | 'text_change' | 'load' | 'before_unload' | 'blur' | 'hover' | 'wheel' | 'drag' | 'dragstart' | 'dragend' | 'dragenter' | 'dragover' | 'dragleave' | 'drop' | 'file' | 'resize';
     timestamp: number;
-};
-export declare type MachineMouseEvent = BaseEvent & {
-    screenX: number;
-    screenY: number;
-    clientX: number;
-    clientY: number;
+}
+export interface BaseMouseEvent extends BaseEvent {
+    type: 'mousedown' | 'mouseup' | 'click' | 'dblclick' | 'auxclick' | 'drag' | 'drop' | 'dragstart' | 'dragend' | 'dragenter' | 'dragover' | 'dragleave';
     button: number;
     buttons: number;
-    modifiers: Modifiers;
-};
-export declare type MousedownEvent = MachineMouseEvent & {
+    clientX: number;
+    clientY: number;
+}
+export interface BaseMousedownEvent extends BaseMouseEvent {
     type: 'mousedown';
-};
-export declare type MouseupEvent = MachineMouseEvent & {
+}
+export interface BaseMouseupEvent extends BaseMouseEvent {
     type: 'mouseup';
-};
-export declare type ClickEvent = MachineMouseEvent & {
+}
+export interface BaseClickEvent extends BaseMouseEvent {
     type: 'click';
-};
-export declare type DblClickEvent = MachineMouseEvent & {
+}
+export interface BaseDblClickEvent extends BaseMouseEvent {
     type: 'dblclick';
-};
-export declare type AuxClickEvent = MachineMouseEvent & {
+}
+export interface BaseAuxClickEvent extends BaseMouseEvent {
     type: 'auxclick';
-};
-export declare type MousemoveEvent = BaseEvent & {
+}
+export interface BaseMousemoveEvent extends BaseEvent {
     type: 'mousemove';
     positions: Array<MousemoveRecord>;
-};
-declare type MouseEvents = MousedownEvent | MouseupEvent | ClickEvent | DblClickEvent | AuxClickEvent | MousemoveEvent;
-export declare type ScrollEvent = BaseEvent & {
+}
+export interface BaseScrollEvent extends BaseEvent {
     type: 'scroll';
     scrollLeft: number;
     scrollTop: number;
-};
-export declare type MachineKeyboardEvent = BaseEvent & {
+}
+export interface BaseKeyboardEvent extends BaseEvent {
+    type: 'keydown' | 'keypress' | 'keyup';
     key: string;
-    code: string;
-    keyCode: number;
-    modifiers: Modifiers;
-};
-export declare type KeydownEvent = MachineKeyboardEvent & {
+}
+export interface BaseKeydownEvent extends BaseKeyboardEvent {
     type: 'keydown';
-};
-export declare type KeypressEvent = MachineKeyboardEvent & {
+}
+export interface BaseKeypressEvent extends BaseKeyboardEvent {
     type: 'keypress';
-};
-export declare type KeyupEvent = MachineKeyboardEvent & {
+}
+export interface BaseKeyupEvent extends BaseKeyboardEvent {
     type: 'keyup';
-};
-export declare type TextInputEvent = BaseEvent & {
+}
+export interface BaseTextInputEvent extends BaseEvent {
     type: 'text_input';
     data: string;
     value: string;
-};
-export declare type TextChangeEvent = BaseEvent & {
+}
+export interface BaseTextChangeEvent extends BaseEvent {
     type: 'text_change';
     value: string;
-};
-export declare type BlurEvent = BaseEvent & {
-    type: 'blur';
-};
-export declare type MachineBeforeUnloadEvent = BaseEvent & {
+}
+export interface BaseLoadEvent extends BaseEvent {
+    type: 'load';
+    url: string;
+}
+export interface BaseBeforeUnloadEvent extends BaseEvent {
     type: 'before_unload';
-};
-export declare type HoverEvent = BaseEvent & {
+    url: string;
+}
+export interface BaseBlurEvent extends BaseEvent {
+    type: 'blur';
+}
+export interface BaseHoverEvent extends BaseEvent {
     type: 'hover';
     clientX: number;
     clientY: number;
-};
-export declare type MachineWheelEvent = BaseEvent & {
+}
+export interface BaseWheelEvent extends BaseEvent {
     type: 'wheel';
-};
-export declare type MachineDragEvent = MachineMouseEvent & {
+}
+export interface BaseDraggingEvent extends BaseMouseEvent {
+    type: 'drag' | 'dragstart' | 'dragend' | 'dragenter' | 'dragover' | 'dragleave' | 'drop';
     targetIndex: number;
-};
-export declare type DraggingEvent = MachineDragEvent & {
+}
+export interface BaseDragEvent extends BaseDraggingEvent {
     type: 'drag';
-};
-export declare type DragStartEvent = MachineDragEvent & {
+}
+export interface BaseDragStartEvent<TFile> extends BaseDraggingEvent {
     type: 'dragstart';
     effectAllowed: DataTransfer['effectAllowed'];
-    items: Array<IDataTransferItem | undefined>;
-};
-export declare type DragEndEvent = MachineDragEvent & {
+    items: Array<IDataTransferItem<TFile> | undefined>;
+}
+export interface BaseDragEndEvent extends BaseDraggingEvent {
     type: 'dragend';
-};
-export declare type DragEnterEvent = MachineDragEvent & {
+}
+export interface BaseDragEnterEvent extends BaseDraggingEvent {
     type: 'dragenter';
-};
-export declare type DragOverEvent = MachineDragEvent & {
+}
+export interface BaseDragOverEvent extends BaseDraggingEvent {
     type: 'dragover';
     dropEffect: DataTransfer['dropEffect'];
-};
-export declare type DragLeaveEvent = MachineDragEvent & {
+}
+export interface BaseDragLeaveEvent extends BaseDraggingEvent {
     type: 'dragleave';
-};
-export declare type DropEvent = MachineDragEvent & {
+}
+export interface BaseDropEvent<TFile> extends BaseDraggingEvent {
     type: 'drop';
     effectAllowed: DataTransfer['effectAllowed'];
     dropEffect: DataTransfer['dropEffect'];
-    items: Array<IDataTransferItem | undefined>;
-};
-export declare type BrowseFileEvent = BaseEvent & {
+    items: Array<IDataTransferItem<TFile> | undefined>;
+}
+export interface BaseBrowseFileEvent<TFile> extends BaseEvent {
     type: 'file';
-    files: Array<File>;
-};
+    files: Array<TFile>;
+}
+export interface BaseResizeEvent extends BaseEvent {
+    type: 'resize';
+    x: number;
+    y: number;
+}
 export {};

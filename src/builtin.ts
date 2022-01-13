@@ -5,15 +5,14 @@ import {
   MatcherElement,
   MatcherStep,
 } from './matcher/types';
-import { EventObserver } from './observers';
+import { EventObserver, EventObserverStepEvent } from './observer';
 import { Recorder } from './recorder';
-import { StepEvent } from './types';
 import { randomId } from './util/fn';
 
 export type InteractionRecorderOptions = {
-  onNewStep: (step: MatcherStep) => void;
-  onEndStep: (step: MatcherStep) => void;
-  onUpdateStep: (step: MatcherStep) => void;
+  onNewStep: (step: MatcherStep<EventObserverStepEvent>) => void;
+  onEndStep: (step: MatcherStep<EventObserverStepEvent>) => void;
+  onUpdateStep: (step: MatcherStep<EventObserverStepEvent>) => void;
 };
 
 export class ElementSerializer {
@@ -102,35 +101,40 @@ export class ElementSerializer {
 
 export class InteractionRecorder {
   private serializer = new ElementSerializer();
-  private _observer: EventObserver<MachineMatcherInput>;
-  public get observer(): EventObserver<MachineMatcherInput> {
+  private _observer: EventObserver<MachineMatcherInput<EventObserverStepEvent>>;
+  public get observer(): EventObserver<
+    MachineMatcherInput<EventObserverStepEvent>
+  > {
     return this._observer;
   }
 
-  private _recorder: Recorder<StepEvent, MachineMatcherInput>;
-  public get recorder(): Recorder<StepEvent, MachineMatcherInput> {
+  private _recorder: Recorder<
+    EventObserverStepEvent,
+    MachineMatcherInput<EventObserverStepEvent>
+  >;
+  public get recorder(): Recorder<
+    EventObserverStepEvent,
+    MachineMatcherInput<EventObserverStepEvent>
+  > {
     return this._recorder;
   }
 
   constructor(win: Window, options?: InteractionRecorderOptions) {
-    this._observer = new EventObserver<MachineMatcherInput>(
-      win,
-      (stepevent, target: HTMLElement) => {
-        return {
-          event: stepevent,
-          element: this.serializer.getSerializedItem(target),
-        };
-      },
-    );
+    this._observer = new EventObserver<
+      MachineMatcherInput<EventObserverStepEvent>
+    >(win, (stepevent, target: HTMLElement) => {
+      return {
+        event: stepevent,
+        element: this.serializer.getSerializedItem(target),
+      };
+    });
 
     this._recorder = new Recorder({
-      matcher: new MachineMatcher({
+      matcher: new MachineMatcher<EventObserverStepEvent>({
         emitter: new EventEmitter2(),
         onNewStep: options?.onNewStep,
         onUpdateStep: options?.onUpdateStep,
-        onEndStep: (step) => {
-          options?.onEndStep(step);
-        },
+        onEndStep: options?.onEndStep,
       }),
     });
 
