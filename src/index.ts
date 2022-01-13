@@ -1,5 +1,5 @@
 export * from './builtin';
-export * from './observers';
+export * from './observer';
 export * from './types';
 export * from './matcher';
 export * from './recorder';

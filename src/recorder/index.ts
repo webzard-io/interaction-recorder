@@ -1,6 +1,6 @@
-﻿import { IMatcher } from './matcher';
-import { AbstractObserver } from './observers';
-import { MatcherKey } from './types';
+﻿import { IMatcher } from '../matcher';
+import { AbstractObserver } from '../observer';
+import { MatcherKey } from '../types';
 
 export type RecorderOptions<TMiddleware> = {
   matcher: IMatcher<TMiddleware>;
