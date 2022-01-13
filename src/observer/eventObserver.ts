@@ -1,10 +1,12 @@
 import { EventEmitter2 } from 'eventemitter2';
 import { AbstractObserver } from './abstractObserver';
 import { MousemoveRecord } from '../types';
-import { isInputLikeElement } from '../util/fn';
+import { isInputLikeElement, randomId } from '../util/fn';
 import { getSerializedDataTransferItemList } from '../util/entry-reader';
 import { ResetHandler, toModifiers, on } from '../util/fn';
 import { EventObserverStepEvent, EventProcessor } from './type';
+
+const SCROLL_SYMBOL_ID_DATASET_KEY = 'interactionRecorderScrollSymbolId';
 
 export class EventObserver<TOutput> extends AbstractObserver<
   EventObserverStepEvent,
@@ -163,14 +165,13 @@ export class EventObserver<TOutput> extends AbstractObserver<
   }
 
   private observeScroll() {
-    const symbolList = new Map<EventTarget | null, symbol>();
     const updatePosition = this.getThrottler<UIEvent>(
       (e: UIEvent) => {
-        if (!symbolList.has(e.target)) {
-          symbolList.set(e.target, Symbol());
+        const ele = e.target as HTMLElement;
+        if (!ele.dataset[SCROLL_SYMBOL_ID_DATASET_KEY]) {
+          ele.dataset[SCROLL_SYMBOL_ID_DATASET_KEY] = randomId();
         }
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return symbolList.get(e.target)!;
+        return Symbol.for(ele.dataset[SCROLL_SYMBOL_ID_DATASET_KEY]!);
       },
       (evt) => {
         if (!this.active) {
