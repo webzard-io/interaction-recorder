@@ -6,6 +6,7 @@ export interface IThrottler {
     invoker: (() => void) | null;
     timeout: number | null;
     previous: number;
+    key: symbol;
 }
 export declare class ThrottleManager {
     private throttlerMap;
