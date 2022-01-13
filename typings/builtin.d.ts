@@ -7,10 +7,7 @@ export declare type InteractionRecorderOptions = {
     onUpdateStep: (step: MatcherStep<EventObserverStepEvent>) => void;
 };
 export declare class ElementSerializer {
-    private ElementMap;
-    private idMap;
-    constructor();
-    getElementById(id: string): HTMLElement | undefined;
+    getElementById(id: string): HTMLElement | null;
     getSerializedItem(ele: HTMLElement | Window | null): MatcherElement | null;
     private serializeAttribute;
     getIdByElement(element: HTMLElement | null): string | undefined;
